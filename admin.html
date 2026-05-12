@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{--bg:#080c14;--surface:#0f1623;--surface2:#16202f;--surface3:#1c2a3d;--border:#1e2d42;--amber:#f59e0b;--amber-glow:rgba(245,158,11,.15);--text:#dde6f5;--muted:#5a7394;--muted2:#3d5270;--green:#34d399;--red:#f87171;--accent:#4f8eff;--accent2:#7eabff;--purple:#a78bfa;--font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace;}
+  html,body{min-height:100%;font-family:var(--font);background:radial-gradient(ellipse 70% 50% at 50% -5%,rgba(245,158,11,.07),transparent 70%),var(--bg);color:var(--text);font-size:14px;display:flex;align-items:flex-start;justify-content:center;padding:30px 20px;}
+  ::-webkit-scrollbar{width:5px;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;}
+
+  .card{width:100%;max-width:480px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:30px 28px 28px;box-shadow:0 0 60px rgba(0,0,0,.5);animation:fadeIn .35s ease;}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--amber),#d97706);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px rgba(245,158,11,.3);}
+  .logo-text{font-weight:700;font-size:16px;} .logo-text span{color:var(--amber);}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:20px;font-size:10px;font-weight:600;color:var(--amber);letter-spacing:.06em;text-transform:uppercase;margin-bottom:20px;margin-top:10px;}
+  .subtitle{font-size:12px;color:var(--muted);margin-bottom:22px;line-height:1.55;}
+  .section-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+  .field-group{margin-bottom:13px;}
+  .field-label{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+  .field-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-family:var(--mono);font-size:12.5px;outline:none;transition:border-color .2s,box-shadow .2s;}
+  .field-input:focus{border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-glow);}
+  .field-input::placeholder{color:var(--muted2);}
+  input[type="date"].field-input{color-scheme:dark;} select.field-input{cursor:pointer;}
+  .btn{width:100%;padding:12px;font-family:var(--font);font-size:14px;font-weight:600;border:none;border-radius:10px;cursor:pointer;transition:all .2s;margin-top:6px;}
+  .btn-amber{background:var(--amber);color:#0a0a0a;box-shadow:0 0 24px rgba(245,158,11,.25);}
+  .btn-amber:hover{background:#e08c00;} .btn-amber:active{transform:scale(.98);}
+  .btn-amber:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+  .btn-ghost{background:none;color:var(--red);border:1px solid rgba(248,113,113,.2);font-size:13px;font-weight:500;}
+  .btn-ghost:hover{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.4);}
+  .alert{margin-top:12px;padding:10px 13px;border-radius:9px;font-size:12.5px;line-height:1.5;display:none;}
+  .alert.error{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);color:var(--red);}
+  .alert.success{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);color:var(--green);}
+  .status-box{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:13px 15px;margin-bottom:18px;}
+  .status-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:3px 0;}
+  .status-row+.status-row{border-top:1px solid var(--border);margin-top:9px;padding-top:11px;}
+  .status-key{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+  .status-val{font-family:var(--mono);font-size:12px;color:var(--accent);}
+  .status-val.expired{color:var(--red);} .status-val.ok{color:var(--green);}
+  hr{border:none;border-top:1px solid var(--border);margin:18px 0;}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.2);border-top-color:#0a0a0a;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+  .spinner-light{border-color:rgba(255,255,255,.3);border-top-color:#fff;}
+
+  /* ── TABS ── */
+  .tab-bar{display:flex;gap:6px;margin-bottom:22px;}
+  .tab-btn{flex:1;padding:9px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--muted);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center;}
+  .tab-btn:hover{border-color:var(--amber);color:var(--amber);}
+  .tab-btn.active{background:var(--amber);color:#0a0a0a;border-color:var(--amber);}
+  .tab-btn .count{display:inline-block;background:rgba(0,0,0,.15);border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px;}
+  .tab-content{display:none;} .tab-content.active{display:block;}
+
+  /* ── FLAG CARDS ── */
+  .flag-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:10px;}
+  .flag-card.critical{border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.04);}
+  .flag-card.high{border-color:rgba(245,158,11,.3);}
+  .flag-card.medium{border-color:rgba(79,142,255,.2);}
+  .flag-header{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;}
+  .flag-badge{font-size:10px;font-weight:700;letter-spacing:.05em;padding:3px 8px;border-radius:5px;text-transform:uppercase;}
+  .flag-badge.critical{background:rgba(248,113,113,.15);color:var(--red);}
+  .flag-badge.high{background:rgba(245,158,11,.12);color:var(--amber);}
+  .flag-badge.medium{background:rgba(79,142,255,.1);color:var(--accent2);}
+  .flag-user{font-size:12px;font-family:var(--mono);color:var(--text);font-weight:600;}
+  .flag-time{font-size:10px;color:var(--muted2);font-family:var(--mono);margin-left:auto;}
+  .flag-msg{font-size:11.5px;color:var(--muted);background:var(--surface3);border-radius:7px;padding:8px 11px;margin:0 0 10px;font-family:var(--mono);word-break:break-word;border-left:3px solid var(--border);}
+  .flag-actions{display:flex;gap:7px;flex-wrap:wrap;}
+  .fbtn{padding:6px 13px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;font-family:var(--font);transition:all .15s;}
+  .fbtn.clear{background:none;border:1px solid var(--border);color:var(--muted);}
+  .fbtn.clear:hover{border-color:var(--green);color:var(--green);}
+  .fbtn.archive{background:none;border:1px solid rgba(79,142,255,.3);color:var(--accent2);}
+  .fbtn.archive:hover{background:rgba(79,142,255,.1);}
+  .fbtn.action-taken{background:var(--red);color:#fff;}
+  .fbtn.action-taken:hover{background:#d94f4f;}
+  .flags-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .flags-toolbar-title{font-size:12px;color:var(--muted);}
+  .clear-all-btn{padding:6px 12px;background:none;border:1px solid rgba(248,113,113,.25);color:var(--red);border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s;}
+  .clear-all-btn:hover{background:rgba(248,113,113,.08);}
+  .empty-state{text-align:center;padding:30px 20px;color:var(--muted2);font-size:13px;}
+  .empty-state .icon{font-size:28px;margin-bottom:10px;}
+
+  /* ── ARCHIVE CARDS ── */
+  .archive-card{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;margin-bottom:8px;opacity:.85;}
+  .archive-card.action-taken-card{border-color:rgba(248,113,113,.2);}
+  .archive-header{display:flex;align-items:center;gap:7px;margin-bottom:7px;flex-wrap:wrap;}
+  .archive-badge{font-size:9px;font-weight:700;letter-spacing:.05em;padding:2px 7px;border-radius:4px;text-transform:uppercase;}
+  .archive-badge.action-taken{background:rgba(248,113,113,.12);color:var(--red);}
+  .archive-badge.normal{background:rgba(90,115,148,.12);color:var(--muted);}
+  .archive-msg{font-size:11px;color:var(--muted2);font-family:var(--mono);word-break:break-word;background:var(--surface3);border-radius:6px;padding:7px 10px;}
+
+  #auth-screen,#admin-screen{display:none;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- ══ AUTH ══ -->
+  <div id="auth-screen">
+    <div class="logo"><div class="logo-icon">🔐</div><div class="logo-text">Admin<span>Panel</span></div></div>
+    <div class="badge">🔒 Owner Access Only</div>
+    <div class="subtitle">Enter your master passkey. Verified securely against your Google Sheet.</div>
+    <div class="field-group">
+      <label class="field-label">Master Passkey</label>
+      <input class="field-input" id="master-input" type="password" placeholder="••••••••" autocomplete="off">
+    </div>
+    <button class="btn btn-amber" id="auth-btn" onclick="doAuth()">Unlock →</button>
+    <div class="alert error" id="auth-error"></div>
+  </div>
+
+  <!-- ══ ADMIN ══ -->
+  <div id="admin-screen">
+    <div class="logo"><div class="logo-icon">🔐</div><div class="logo-text">Admin<span>Panel</span></div></div>
+    <div class="badge">✓ Authenticated</div>
+
+    <!-- Tab bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tab-btn-settings" onclick="showTab('settings')">&#9881; Settings</button>
+      <button class="tab-btn" id="tab-btn-flags" onclick="showTab('flags')">Flags <span class="count" id="flag-count">...</span></button>
+      <button class="tab-btn" id="tab-btn-requests" onclick="showTab('requests')">Opus Reqs <span class="count" id="req-count">...</span></button>
+      <button class="tab-btn" id="tab-btn-archive" onclick="showTab('archive')">Archive</button>
+    </div>
+
+    <!-- ── SETTINGS TAB ── -->
+    <div class="tab-content active" id="tab-settings">
+      <div class="section-label">Current Settings</div>
+      <div class="status-box">
+        <div class="status-row"><span class="status-key">Active Passkey</span><span class="status-val" id="display-passkey">loading…</span></div>
+        <div class="status-row"><span class="status-key">Expires</span><span class="status-val" id="display-expires">loading…</span></div>
+        <div class="status-row"><span class="status-key">Msg Limit</span><span class="status-val" id="display-msgs">—</span></div>
+        <div class="status-row"><span class="status-key">Model</span><span class="status-val" id="display-model">—</span></div>
+      </div>
+
+      <hr>
+      <div class="section-label">Update Chat Passkey</div>
+      <div class="field-group">
+        <label class="field-label">New Passkey</label>
+        <input class="field-input" id="new-passkey" type="text" placeholder="e.g. falcon-rain-42" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Expiry Date</label>
+        <input class="field-input" id="new-expires" type="date">
+      </div>
+
+      <hr>
+      <div class="section-label">Usage Controls</div>
+      <div class="field-group">
+        <label class="field-label">Max Messages / Session <span style="color:var(--muted2);font-weight:400;text-transform:none;letter-spacing:0">(0 = unlimited)</span></label>
+        <input class="field-input" id="new-max-msgs" type="number" min="0" max="500" placeholder="40">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Model Access</label>
+        <select class="field-input" id="new-model-lock">
+          <option value="">Both — user can choose</option>
+          <option value="haiku">Haiku only (cheaper)</option>
+          <option value="sonnet">Sonnet only (smarter)</option>
+        </select>
+      </div>
+
+      <button class="btn btn-amber" onclick="saveAll()">Save All Changes →</button>
+      <button class="btn btn-ghost" style="margin-top:10px" onclick="resetAll()">Reset Usage Settings to Defaults</button>
+      <div class="alert error" id="save-error"></div>
+      <div class="alert success" id="save-success"></div>
+
+      <hr>
+      <div class="section-label">Personal Passkeys</div>
+      <div class="subtitle" style="margin-bottom:14px">Required when logging in as Sam or Isaac. Jacob uses the master passkey. Stored in Sheet A3/A4.</div>
+      <div class="field-group">
+        <label class="field-label">Sam's Passkey <span style="color:var(--muted2);font-weight:400;text-transform:none;letter-spacing:0" id="sam-key-display"></span></label>
+        <input class="field-input" id="sam-key-input" type="text" placeholder="Current key loading..." autocomplete="off" spellcheck="false">
+      </div>
+      <button class="btn btn-amber" style="margin-bottom:10px" onclick="savePersonalKey('sam')">Save Sam's Key</button>
+      <div class="field-group">
+        <label class="field-label">Isaac's Passkey <span style="color:var(--muted2);font-weight:400;text-transform:none;letter-spacing:0" id="isaac-key-display"></span></label>
+        <input class="field-input" id="isaac-key-input" type="text" placeholder="Current key loading..." autocomplete="off" spellcheck="false">
+      </div>
+      <button class="btn btn-amber" onclick="savePersonalKey('isaac')">Save Isaac's Key</button>
+      <div class="alert error" id="personal-key-error"></div>
+      <div class="alert success" id="personal-key-success"></div>
+    </div>
+
+    <!-- ── FLAGS TAB ── -->
+    <div class="tab-content" id="tab-flags">
+      <div class="flags-toolbar">
+        <span class="flags-toolbar-title" id="flags-toolbar-title">Loading…</span>
+        <button class="clear-all-btn" onclick="clearAllFlags()">Clear All</button>
+      </div>
+      <div id="flags-list">
+        <div class="empty-state"><div class="icon">🔄</div>Loading flags…</div>
+      </div>
+    </div>
+
+    <!-- ── REQUESTS TAB ── -->
+    <div class="tab-content" id="tab-requests">
+      <div class="section-label">Direct Authorize Opus</div>
+      <div class="field-group">
+        <label class="field-label">Username to Authorize</label>
+        <input class="field-input" id="direct-auth-username" type="text" placeholder="e.g. Sam" autocomplete="off">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Optional Message to User</label>
+        <input class="field-input" id="direct-auth-reply" type="text" placeholder="e.g. Go crazy lol" autocomplete="off">
+      </div>
+      <button class="btn btn-amber" style="margin-bottom:18px" onclick="authorizeOpusDirect()">Authorize Opus (5 msgs)</button>
+      <div class="alert error" id="direct-auth-error"></div>
+      <div class="alert success" id="direct-auth-success"></div>
+      <hr>
+      <div class="flags-toolbar">
+        <span class="flags-toolbar-title" id="req-toolbar-title">Loading requests...</span>
+        <button class="clear-all-btn" style="border-color:var(--border);color:var(--muted)" onclick="loadOpusRequests()">Refresh</button>
+      </div>
+      <div id="requests-list">
+        <div class="empty-state"><div class="icon">&#8987;</div>Loading...</div>
+      </div>
+    </div>
+
+    <!-- ── ARCHIVE TAB ── -->
+    <div class="tab-content" id="tab-archive">
+      <div class="flags-toolbar">
+        <span class="flags-toolbar-title" id="archive-toolbar-title">Permanent archive — nothing here is ever deleted.</span>
+        <button class="clear-all-btn" style="border-color:var(--border);color:var(--muted)" onclick="loadArchive()">↻ Refresh</button>
+      </div>
+      <div id="archive-list">
+        <div class="empty-state"><div class="icon">📁</div>Click a tab to load archive.</div>
+      </div>
+    </div>
+
+  </div><!-- end admin-screen -->
+</div>
+
+<script>
+const SCRIPT_URL    = "/api/api";
+const CLIENT_SECRET = "NETLIFY_SECRET";
+const DEFAULT_MAX_MSGS = 40;
+let masterPasskey = "";
+
+/* ── Init ── */
+window.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("auth-screen").style.display = "block";
+  document.getElementById("master-input").addEventListener("keydown", e => { if(e.key==="Enter") doAuth(); });
+});
+
+/* ── Auth ── */
+async function doAuth() {
+  const pk  = document.getElementById("master-input").value;
+  const err = document.getElementById("auth-error");
+  const btn = document.getElementById("auth-btn");
+  err.style.display = "none";
+  if(!pk) { err.textContent="Enter your master passkey."; err.style.display="block"; return; }
+  btn.innerHTML = '<span class="spinner"></span>Verifying…'; btn.disabled = true;
+  try {
+    const res  = await post({ action:"verify", passkey:pk });
+    const data = await res.json();
+    if(data.ok) {
+      masterPasskey = pk;
+      document.getElementById("auth-screen").style.display = "none";
+      const ad = document.getElementById("admin-screen"); ad.style.display = "block"; ad.style.animation = "fadeIn .3s ease";
+      refreshStatus(); prefillForm(); loadFlags(); loadPersonalKeys(); loadOpusRequests();
+    } else {
+      err.textContent = "Incorrect master passkey."; err.style.display = "block";
+      document.getElementById("master-input").value = ""; document.getElementById("master-input").focus();
+    }
+  } catch(e) { err.textContent="Could not reach the script."; err.style.display="block"; }
+  finally { btn.innerHTML="Unlock →"; btn.disabled=false; }
+}
+
+/* ── Tabs ── */
+function showTab(name) {
+  ["settings","flags","requests","archive"].forEach(function(t) {
+    document.getElementById("tab-"+t).classList.toggle("active", t===name);
+    document.getElementById("tab-btn-"+t).classList.toggle("active", t===name);
+  });
+  if(name==="flags") loadFlags();
+  if(name==="requests") loadOpusRequests();
+  if(name==="archive") loadArchive();
+}
+
+/* ── Settings ── */
+async function refreshStatus() {
+  try {
+    const res  = await post({ action:"getPasskey" });
+    const data = await res.json();
+    if(data.ok) {
+      document.getElementById("display-passkey").textContent = data.chatPasskey || "(not set)";
+      const ex = data.chatExpiry || "";
+      const expired = ex && new Date() > new Date(ex+"T23:59:59");
+      const exEl = document.getElementById("display-expires");
+      exEl.textContent = ex ? ex+(expired?" ⚠ EXPIRED":" ✓") : "(not set)";
+      exEl.className = "status-val "+(expired?"expired":"ok");
+    }
+  } catch(_) { document.getElementById("display-passkey").textContent="couldn't fetch"; }
+  const mm = localStorage.getItem("chat_max_msgs") || DEFAULT_MAX_MSGS;
+  const ml = localStorage.getItem("chat_model_lock") || "";
+  document.getElementById("display-msgs").textContent  = mm==0 ? "Unlimited" : mm;
+  document.getElementById("display-model").textContent = ml==="haiku"?"Haiku only":ml==="sonnet"?"Sonnet only":"User's choice";
+}
+
+function prefillForm() {
+  document.getElementById("new-max-msgs").value   = localStorage.getItem("chat_max_msgs")   || DEFAULT_MAX_MSGS;
+  document.getElementById("new-model-lock").value = localStorage.getItem("chat_model_lock") || "";
+}
+
+async function saveAll() {
+  const pk  = document.getElementById("new-passkey").value.trim();
+  const ex  = document.getElementById("new-expires").value.trim();
+  const mm  = document.getElementById("new-max-msgs").value;
+  const ml  = document.getElementById("new-model-lock").value;
+  const err = document.getElementById("save-error");
+  const ok  = document.getElementById("save-success");
+  err.style.display="none"; ok.style.display="none";
+
+  if(pk||ex) {
+    if(!pk||!ex) { err.textContent="Fill in both the passkey and expiry, or leave both blank."; err.style.display="block"; return; }
+    if(new Date()>new Date(ex+"T23:59:59")) { err.textContent="Expiry date is already in the past."; err.style.display="block"; return; }
+    const btn = document.querySelector("#tab-settings .btn-amber");
+    btn.innerHTML='<span class="spinner"></span>Saving…'; btn.disabled=true;
+    try {
+      const res  = await post({ action:"savePasskey", masterPasskey, chatPasskey:pk, chatExpiry:ex });
+      const data = await res.json();
+      if(!data.ok) { err.textContent="Failed to save to Sheet."; err.style.display="block"; btn.innerHTML="Save All Changes →"; btn.disabled=false; return; }
+    } catch(e) { err.textContent="Could not reach Apps Script."; err.style.display="block"; btn.innerHTML="Save All Changes →"; btn.disabled=false; return; }
+    btn.innerHTML="Save All Changes →"; btn.disabled=false;
+  }
+
+  if(mm!=="") localStorage.setItem("chat_max_msgs",mm);
+  localStorage.setItem("chat_model_lock",ml);
+  await refreshStatus();
+  ok.textContent = pk ? "✓ Passkey saved to Sheet — active for everyone on next page load." : "✓ Usage settings saved.";
+  ok.style.display="block";
+  document.getElementById("new-passkey").value=""; document.getElementById("new-expires").value="";
+  setTimeout(()=>{ok.style.display="none";},5000);
+}
+
+function resetAll() {
+  if(!confirm("Reset usage settings to defaults? (Passkey in Sheet is not affected)")) return;
+  ["chat_max_msgs","chat_model_lock"].forEach(k=>localStorage.removeItem(k));
+  refreshStatus(); prefillForm();
+  const ok = document.getElementById("save-success");
+  ok.textContent="✓ Usage settings reset."; ok.style.display="block";
+  setTimeout(()=>{ok.style.display="none";},3000);
+}
+
+/* ── Personal Keys ── */
+async function loadPersonalKeys() {
+  try {
+    var res  = await post({ action:"getPersonalKeys", masterPasskey:masterPasskey });
+    var data = await res.json();
+    if(data.ok) {
+      document.getElementById("sam-key-input").value   = data.samKey   || "";
+      document.getElementById("isaac-key-input").value = data.isaacKey || "";
+      document.getElementById("sam-key-display").textContent   = data.samKey   ? "(current: " + data.samKey + ")"   : "(not set)";
+      document.getElementById("isaac-key-display").textContent = data.isaacKey ? "(current: " + data.isaacKey + ")" : "(not set)";
+    }
+  } catch(_) {}
+}
+
+async function savePersonalKey(person) {
+  var key = document.getElementById(person+"-key-input").value.trim();
+  var err = document.getElementById("personal-key-error");
+  var ok  = document.getElementById("personal-key-success");
+  err.style.display="none"; ok.style.display="none";
+  if(!key) { err.textContent="Enter a passkey."; err.style.display="block"; return; }
+  try {
+    var res  = await post({ action:"savePersonalKey", masterPasskey:masterPasskey, person:person, key:key });
+    var data = await res.json();
+    if(data.ok) {
+      ok.textContent = "Saved " + person + "'s key."; ok.style.display="block";
+      document.getElementById(person+"-key-display").textContent = "(current: " + key + ")";
+      setTimeout(function(){ok.style.display="none";},3000);
+    } else { err.textContent="Failed to save."; err.style.display="block"; }
+  } catch(e) { err.textContent="Network error."; err.style.display="block"; }
+}
+
+/* ── Opus Requests ── */
+async function loadOpusRequests() {
+  document.getElementById("requests-list").innerHTML = "<div class=\"empty-state\"><div class=\"icon\">&#8987;</div>Loading...</div>";
+  try {
+    var res  = await post({ action:"getOpusRequests", masterPasskey:masterPasskey });
+    var data = await res.json();
+    if(!data.ok) throw new Error();
+    renderOpusRequests(data.requests||[]);
+  } catch(e) {
+    document.getElementById("requests-list").innerHTML = "<div class=\"empty-state\"><div class=\"icon\">&#9888;</div>Failed to load.</div>";
+  }
+}
+
+function renderOpusRequests(requests) {
+  var list = document.getElementById("requests-list");
+  var count = document.getElementById("req-count");
+  var pending = requests.filter(function(r){return r.status==="pending";});
+  count.textContent = pending.length;
+  document.getElementById("req-toolbar-title").textContent = pending.length + " pending request"+(pending.length===1?"":"s");
+  if(requests.length===0){list.innerHTML="<div class=\"empty-state\"><div class=\"icon\">&#10003;</div>No pending requests.</div>";return;}
+  list.innerHTML="";
+  requests.forEach(function(req) {
+    var card=document.createElement("div");
+    card.className="flag-card medium";card.id="req-"+req.id;
+    var time=new Date(req.timestamp).toLocaleString();
+    var statusColor=req.status==="approved"?"var(--green)":req.status==="denied"?"var(--red)":"var(--amber)";
+    card.innerHTML="<div class=\"flag-header\"><span class=\"flag-badge medium\">OPUS REQUEST</span><span class=\"flag-user\">"+esc(req.username)+"</span><span class=\"flag-time\">"+esc(time)+"</span></div>"
+      +"<div class=\"flag-msg\">"+esc(req.reason||"(no reason given)")+"</div>"
+      +(req.status!=="pending"?"<div style=\"font-size:11px;color:"+statusColor+";margin-bottom:8px;font-weight:600;\">Status: "+req.status.toUpperCase()+(req.reply?" -- "+req.reply:"")+"</div>":"")
+      +(req.status==="pending"?"<div class=\"flag-actions\">"
+        +"<div style=\"display:flex;flex-direction:column;gap:6px;width:100%\">"
+        +"<input class=\"field-input\" id=\"reply-"+esc(req.id)+"\" type=\"text\" placeholder=\"Optional reply to user...\" style=\"font-size:12px;padding:7px 10px;\">"
+        +"<div style=\"display:flex;gap:7px;\">"
+        +"<button class=\"fbtn\" style=\"background:var(--green);color:#000;font-weight:700;\" onclick=\"respondToOpus('"+esc(req.id)+"',true)\">Approve</button>"
+        +"<button class=\"fbtn action-taken\" onclick=\"respondToOpus('"+esc(req.id)+"',false)\">Deny</button>"
+        +"</div></div></div>":"");
+    list.appendChild(card);
+  });
+}
+
+async function respondToOpus(requestId, approved) {
+  var replyEl = document.getElementById("reply-"+requestId);
+  var reply = replyEl ? replyEl.value.trim() : "";
+  try {
+    var res = await post({ action:"respondOpusRequest", masterPasskey:masterPasskey, requestId:requestId, approved:approved, reply:reply });
+    var data = await res.json();
+    if(data.ok) { loadOpusRequests(); }
+    else alert("Failed to respond.");
+  } catch(e) { alert("Network error."); }
+}
+
+async function authorizeOpusDirect() {
+  var uname = document.getElementById("direct-auth-username").value.trim();
+  var reply  = document.getElementById("direct-auth-reply").value.trim();
+  var err = document.getElementById("direct-auth-error");
+  var ok  = document.getElementById("direct-auth-success");
+  err.style.display="none";ok.style.display="none";
+  if(!uname){err.textContent="Enter a username.";err.style.display="block";return;}
+  try {
+    var res = await post({ action:"authorizeOpusDirect", masterPasskey:masterPasskey, targetUsername:uname, reply:reply });
+    var data = await res.json();
+    if(data.ok){ok.textContent="Authorized! "+uname+" will see it on next refresh.";ok.style.display="block";document.getElementById("direct-auth-username").value="";document.getElementById("direct-auth-reply").value="";setTimeout(function(){ok.style.display="none";},4000);}
+    else{err.textContent="Failed.";err.style.display="block";}
+  } catch(e){err.textContent="Network error.";err.style.display="block";}
+}
+
+/* ── Flags ── */
+async function loadFlags() {
+  document.getElementById("flags-list").innerHTML = `<div class="empty-state"><div class="icon">🔄</div>Loading…</div>`;
+  try {
+    const res  = await post({ action:"getFlags", masterPasskey });
+    const data = await res.json();
+    if(!data.ok) throw new Error("Not authorized");
+    renderFlags(data.flags || []);
+  } catch(e) {
+    document.getElementById("flags-list").innerHTML = `<div class="empty-state"><div class="icon">⚠</div>Failed to load flags. Are you sure FLAGS_SHEET_ID is set in Code.gs?</div>`;
+  }
+}
+
+function renderFlags(flags) {
+  const list = document.getElementById("flags-list");
+  const count = document.getElementById("flag-count");
+  count.textContent = flags.length;
+
+  if(flags.length===0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">✅</div>No active flags. All clear.</div>`;
+    document.getElementById("flags-toolbar-title").textContent = "No active flags.";
+    return;
+  }
+  document.getElementById("flags-toolbar-title").textContent = `${flags.length} active flag${flags.length===1?"":"s"}`;
+
+  // Sort: CRITICAL first, then HIGH, then MEDIUM
+  const order = {CRITICAL:0,HIGH:1,MEDIUM:2};
+  flags.sort((a,b) => (order[a.severity]||3)-(order[b.severity]||3));
+
+  list.innerHTML = "";
+  flags.forEach(f => list.appendChild(createFlagCard(f)));
+}
+
+function createFlagCard(flag) {
+  const isCritical = flag.flagType === "MINOR_SEXUAL";
+  const sevClass   = flag.severity === "CRITICAL" ? "critical" : flag.severity === "HIGH" ? "high" : "medium";
+  const typeLabel  = flag.flagType.replace(/_/g," ");
+  const time       = new Date(flag.timestamp).toLocaleString();
+
+  const card = document.createElement("div");
+  card.className = `flag-card ${sevClass}`;
+  card.id = `flag-${flag.id}`;
+
+  let actions;
+  if(isCritical) {
+    actions = `<button class="fbtn action-taken" onclick="archiveFlag('${esc(flag.id)}',true)">⚠ Action Taken — Archive Permanently</button>`;
+  } else {
+    actions = `
+      <button class="fbtn archive" onclick="archiveFlag('${esc(flag.id)}',false)">Archive</button>
+      <button class="fbtn clear" onclick="clearFlag('${esc(flag.id)}')">Clear</button>`;
+  }
+
+  card.innerHTML = `
+    <div class="flag-header">
+      <span class="flag-badge ${sevClass}">${esc(typeLabel)}</span>
+      <span class="flag-user">👤 ${esc(flag.username)}</span>
+      <span class="flag-time">${esc(time)}</span>
+    </div>
+    <div class="flag-msg">"${esc((flag.message||"").substring(0,400))}"</div>
+    <div class="flag-actions">${actions}</div>`;
+
+  return card;
+}
+
+async function clearFlag(flagId) {
+  if(!confirm("Permanently delete this flag? This can't be undone.")) return;
+  try {
+    const res  = await post({ action:"clearFlag", masterPasskey, flagId });
+    const data = await res.json();
+    if(data.ok) { document.getElementById(`flag-${flagId}`)?.remove(); refreshFlagCount(); }
+    else alert("Failed to clear flag.");
+  } catch(e) { alert("Network error."); }
+}
+
+async function archiveFlag(flagId, actionTaken) {
+  const msg = actionTaken
+    ? "Mark as 'Action Taken' and permanently archive? This cannot be undone or cleared."
+    : "Move this flag to the Archive?";
+  if(!confirm(msg)) return;
+  try {
+    const res  = await post({ action:"archiveFlag", masterPasskey, flagId, actionTaken });
+    const data = await res.json();
+    if(data.ok) {
+      document.getElementById(`flag-${flagId}`)?.remove(); refreshFlagCount();
+      if(actionTaken) showToast("Archived with 'Action Taken' status.");
+    } else alert("Failed to archive.");
+  } catch(e) { alert("Network error."); }
+}
+
+async function clearAllFlags() {
+  if(!confirm("Permanently delete ALL active flags? This cannot be undone.")) return;
+  try {
+    const res  = await post({ action:"clearAllFlags", masterPasskey });
+    const data = await res.json();
+    if(data.ok) loadFlags();
+    else alert("Failed to clear all flags.");
+  } catch(e) { alert("Network error."); }
+}
+
+function refreshFlagCount() {
+  const remaining = document.querySelectorAll("[id^='flag-']").length;
+  document.getElementById("flag-count").textContent = remaining;
+  if(remaining===0) {
+    document.getElementById("flags-list").innerHTML = `<div class="empty-state"><div class="icon">✅</div>No active flags. All clear.</div>`;
+    document.getElementById("flags-toolbar-title").textContent = "No active flags.";
+  } else {
+    document.getElementById("flags-toolbar-title").textContent = `${remaining} active flag${remaining===1?"":"s"}`;
+  }
+}
+
+/* ── Archive ── */
+async function loadArchive() {
+  document.getElementById("archive-list").innerHTML = `<div class="empty-state"><div class="icon">🔄</div>Loading…</div>`;
+  try {
+    const res  = await post({ action:"getArchive", masterPasskey });
+    const data = await res.json();
+    if(!data.ok) throw new Error();
+    renderArchive(data.archive || []);
+  } catch(e) {
+    document.getElementById("archive-list").innerHTML = `<div class="empty-state"><div class="icon">⚠</div>Failed to load archive.</div>`;
+  }
+}
+
+function renderArchive(archive) {
+  const list = document.getElementById("archive-list");
+  document.getElementById("archive-toolbar-title").textContent = `${archive.length} archived item${archive.length===1?"":"s"} — permanent record.`;
+  if(archive.length===0) { list.innerHTML=`<div class="empty-state"><div class="icon">📁</div>Archive is empty.</div>`; return; }
+  list.innerHTML = "";
+  archive.forEach(a => {
+    const card = document.createElement("div");
+    card.className = `archive-card ${a.actionTaken?"action-taken-card":""}`;
+    const time = new Date(a.timestamp).toLocaleString();
+    const archivedAt = new Date(a.archivedAt).toLocaleString();
+    const typeLabel = (a.flagType||"").replace(/_/g," ");
+    card.innerHTML = `
+      <div class="archive-header">
+        ${a.actionTaken ? '<span class="archive-badge action-taken">⚠ Action Taken</span>' : '<span class="archive-badge normal">Archived</span>'}
+        <span class="flag-badge ${a.severity==="CRITICAL"?"critical":a.severity==="HIGH"?"high":"medium"}" style="font-size:9px">${esc(typeLabel)}</span>
+        <span style="font-size:12px;font-family:var(--mono);color:var(--text)">👤 ${esc(a.username)}</span>
+        <span style="font-size:10px;color:var(--muted2);font-family:var(--mono);margin-left:auto">${esc(time)}</span>
+      </div>
+      <div class="archive-msg">"${esc((a.message||"").substring(0,400))}"</div>
+      <div style="font-size:10px;color:var(--muted2);margin-top:6px;font-family:var(--mono)">Archived: ${esc(archivedAt)}</div>`;
+    list.appendChild(card);
+  });
+}
+
+/* ── Helpers ── */
+function post(body) {
+  return fetch(SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify({ ...body, clientSecret: CLIENT_SECRET })
+  });
+}
+
+function showToast(msg) {
+  const ok = document.getElementById("save-success") || document.createElement("div");
+  ok.textContent = "✓ " + msg; ok.style.display = "block";
+  setTimeout(() => { ok.style.display = "none"; }, 4000);
+}
+
+function esc(s) { return (s||"").toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+</script>
+</body>
+</html>
