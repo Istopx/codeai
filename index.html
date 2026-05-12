@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#080c14; --surface:#0f1623; --surface2:#16202f; --surface3:#1c2a3d;
+    --border:#1e2d42; --accent:#4f8eff; --accent2:#7eabff;
+    --accent-glow:rgba(79,142,255,0.18); --text:#dde6f5; --muted:#5a7394;
+    --muted2:#3d5270; --green:#34d399; --amber:#f59e0b; --red:#f87171;
+    --purple:#a78bfa; --font:'Sora',sans-serif; --mono:'JetBrains Mono',monospace;
+  }
+  html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;overflow:hidden;}
+  ::-webkit-scrollbar{width:5px;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;}
+  #auth-screen{display:flex;align-items:center;justify-content:center;height:100%;background:radial-gradient(ellipse 60% 50% at 50% -10%,rgba(79,142,255,0.12),transparent 70%),var(--bg);padding:20px;animation:fadeIn .4s ease;}
+  .auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 32px 32px;box-shadow:0 0 60px rgba(0,0,0,.5);}
+  .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
+  .auth-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),#7c3aed);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px rgba(79,142,255,.3);}
+  .auth-logo-text{font-weight:700;font-size:16px;letter-spacing:-.3px;}
+  .auth-logo-text span{color:var(--accent2);}
+  .auth-subtitle{font-size:12px;color:var(--muted);margin-bottom:24px;line-height:1.5;}
+  .field-group{margin-bottom:14px;}
+  .field-label{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+  .field-note{font-size:10px;color:var(--muted2);font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px;}
+  .field-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;}
+  .field-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+  .field-input::placeholder{color:var(--muted2);}
+  .auth-btn{width:100%;margin-top:8px;padding:13px;background:var(--accent);color:#fff;font-family:var(--font);font-size:14px;font-weight:600;border:none;border-radius:10px;cursor:pointer;transition:background .2s,transform .1s;box-shadow:0 0 24px rgba(79,142,255,.25);}
+  .auth-btn:hover{background:#3d7aee;} .auth-btn:active{transform:scale(.98);}
+  .auth-error{margin-top:14px;padding:10px 13px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:8px;color:var(--red);font-size:12px;display:none;}
+  #chat-screen{display:none;flex-direction:column;height:100%;animation:fadeIn .3s ease;}
+  #rate-banner{display:none;padding:8px 14px;background:rgba(245,158,11,.08);border-bottom:1px solid rgba(245,158,11,.15);text-align:center;font-size:11.5px;color:var(--amber);flex-shrink:0;}
+  .chat-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;gap:8px;}
+  .header-left{display:flex;align-items:center;gap:9px;}
+  .header-icon{width:28px;height:28px;background:linear-gradient(135deg,var(--accent),#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .header-title{font-weight:600;font-size:13px;white-space:nowrap;}
+  .header-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .model-select{background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--muted);font-family:var(--mono);font-size:10px;padding:4px 7px;outline:none;cursor:pointer;transition:border-color .15s;max-width:140px;}
+  .model-select:hover{border-color:var(--accent);color:var(--accent2);}
+  .msg-counter{font-size:10px;font-family:var(--mono);color:var(--muted2);white-space:nowrap;}
+  .msg-counter.warn{color:var(--amber);} .msg-counter.full{color:var(--red);}
+  .icon-btn{background:none;border:1px solid var(--border);border-radius:7px;width:28px;height:28px;cursor:pointer;color:var(--muted);font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+  .icon-btn:hover{border-color:var(--accent);color:var(--accent2);}
+  .icon-btn.admin:hover{border-color:var(--amber);color:var(--amber);}
+  .icon-btn.pricing:hover{border-color:var(--green);color:var(--green);}
+  .icon-btn.chat-btn:hover{border-color:var(--purple);color:var(--purple);}
+  .icon-btn.refresh-btn:hover{border-color:var(--green);color:var(--green);}
+  .opus-badge{font-size:9px;font-family:var(--mono);color:var(--purple);background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2);border-radius:5px;padding:2px 6px;white-space:nowrap;display:none;}
+  .opus-req-badge{font-size:9px;font-family:var(--mono);color:var(--amber);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:5px;padding:2px 8px;white-space:nowrap;cursor:pointer;display:none;}
+  .status-dot-wrap{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--green);}
+  .status-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite;flex-shrink:0;}
+  #messages{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:12px;}
+  .msg{display:flex;flex-direction:column;gap:3px;animation:slideUp .22s ease;max-width:100%;}
+  .msg-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 3px;}
+  .msg.user .msg-label{color:var(--accent2);align-self:flex-end;}
+  .msg-bubble{padding:10px 13px;border-radius:13px;line-height:1.65;word-break:break-word;font-size:13.5px;}
+  .msg.user{align-items:flex-end;}
+  .msg.user .msg-bubble{background:linear-gradient(135deg,var(--accent),#6366f1);color:#fff;border-bottom-right-radius:4px;box-shadow:0 4px 20px rgba(79,142,255,.2);max-width:88%;}
+  .msg.assistant .msg-bubble{background:var(--surface2);border:1px solid var(--border);border-bottom-left-radius:4px;width:100%;}
+  .msg.system-msg .msg-bubble{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.15);color:var(--amber);font-size:12px;border-radius:8px;text-align:center;}
+  .msg.warn-msg .msg-bubble{background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.2);color:var(--red);font-size:12.5px;border-radius:8px;font-weight:500;text-align:center;padding:12px 16px;}
+  .msg.info-msg .msg-bubble{background:rgba(79,142,255,.06);border:1px solid rgba(79,142,255,.15);color:var(--accent2);font-size:12px;border-radius:8px;text-align:center;}
+  .msg-bubble p{margin-bottom:9px;} .msg-bubble p:last-child{margin-bottom:0;}
+  .msg-bubble strong{color:#fff;font-weight:600;} .msg-bubble em{font-style:italic;color:var(--accent2);}
+  .msg-bubble ul,.msg-bubble ol{padding-left:18px;margin-bottom:9px;} .msg-bubble li{margin-bottom:3px;}
+  .msg-bubble code:not(pre code){font-family:var(--mono);font-size:12px;background:rgba(79,142,255,.1);border:1px solid rgba(79,142,255,.15);padding:1px 6px;border-radius:5px;color:var(--accent2);}
+  .msg-bubble pre{position:relative;margin:10px 0;border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+  .msg-bubble pre .code-header{display:flex;align-items:center;justify-content:space-between;padding:6px 11px;background:var(--surface3);border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);font-family:var(--mono);}
+  .msg-bubble pre .copy-btn{background:none;border:1px solid var(--border);color:var(--muted);font-size:10px;font-family:var(--font);font-weight:500;padding:2px 7px;border-radius:4px;cursor:pointer;transition:all .15s;}
+  .msg-bubble pre .copy-btn:hover{color:var(--text);border-color:var(--accent);}
+  .msg-bubble pre .copy-btn.copied{color:var(--green);border-color:var(--green);}
+  .msg-bubble pre code{display:block;padding:13px;font-family:var(--mono);font-size:12.5px;overflow-x:auto;background:#0d1117!important;line-height:1.6;}
+  .msg-bubble img{max-width:100%;border-radius:8px;margin-top:8px;}
+  .msg-cost{font-size:10px;color:var(--muted2);font-family:var(--mono);padding:2px 4px;margin-top:2px;display:flex;gap:10px;}
+  .typing-indicator{display:flex;gap:5px;align-items:center;padding:3px 1px;}
+  .typing-dot{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bounce 1.2s ease infinite;}
+  .typing-dot:nth-child(2){animation-delay:.15s;} .typing-dot:nth-child(3){animation-delay:.3s;}
+  .chat-input-area{padding:10px 14px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;}
+  .attachment-preview{display:none;align-items:center;gap:8px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;margin-bottom:8px;font-size:12px;color:var(--text);}
+  .attachment-preview .att-icon{font-size:16px;} .attachment-preview .att-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);}
+  .attachment-preview .att-remove{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 4px;}
+  .input-row{display:flex;align-items:flex-end;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:13px;padding:7px 7px 7px 13px;transition:border-color .2s,box-shadow .2s;}
+  .input-row:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+  #user-input{flex:1;background:none;border:none;outline:none;resize:none;font-family:var(--font);font-size:13.5px;color:var(--text);line-height:1.5;max-height:120px;min-height:22px;overflow-y:auto;}
+  #user-input::placeholder{color:var(--muted2);}
+  .input-actions{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+  .input-icon-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px;border-radius:6px;transition:all .15s;display:flex;align-items:center;justify-content:center;}
+  .input-icon-btn:hover{color:var(--accent2);background:rgba(79,142,255,.08);}
+  #send-btn,#chatroom-send-btn{flex-shrink:0;width:32px;height:32px;background:var(--accent);border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,transform .1s;}
+  #send-btn:hover,#chatroom-send-btn:hover{background:#3d7aee;} #send-btn:active,#chatroom-send-btn:active{transform:scale(.92);}
+  #send-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+  #send-btn svg,#chatroom-send-btn svg{fill:white;}
+  .input-footer{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
+  .input-hint{font-size:10px;color:var(--muted2);}
+  .token-est{font-size:10px;color:var(--muted2);font-family:var(--mono);}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;animation:fadeIn .2s ease;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:28px 26px 24px;width:100%;max-width:360px;box-shadow:0 0 60px rgba(0,0,0,.6);}
+  .modal-title{font-size:15px;font-weight:700;margin-bottom:6px;}
+  .modal-sub{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+  .modal-btn{width:100%;padding:11px;font-family:var(--font);font-size:13.5px;font-weight:600;border:none;border-radius:9px;cursor:pointer;transition:all .2s;margin-top:8px;}
+  .modal-btn.primary{background:var(--purple);color:#fff;box-shadow:0 0 20px rgba(167,139,250,.25);}
+  .modal-btn.primary:hover{background:#8b5cf6;} .modal-btn.primary:disabled{opacity:.5;cursor:not-allowed;}
+  .modal-btn.primary.green{background:var(--green);color:#000;}
+  .modal-btn.cancel{background:none;color:var(--muted);border:1px solid var(--border);}
+  .modal-btn.cancel:hover{border-color:var(--accent);color:var(--text);}
+  .modal-error{margin-top:10px;padding:8px 11px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:7px;color:var(--red);font-size:12px;display:none;}
+  .modal-success{margin-top:10px;padding:8px 11px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:7px;color:var(--green);font-size:12px;display:none;}
+  .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px;}
+  .pricing-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px;}
+  .pricing-table th{text-align:left;padding:7px 10px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);}
+  .pricing-table td{padding:8px 10px;border-bottom:1px solid rgba(30,45,66,.5);font-family:var(--mono);font-size:11.5px;}
+  .pricing-table tr:last-child td{border-bottom:none;}
+  .pricing-table .model-name{font-family:var(--font);color:var(--text);font-size:12px;}
+  .pricing-table .cheap{color:var(--green);} .pricing-table .mid{color:var(--amber);} .pricing-table .expensive{color:var(--red);}
+  .pricing-note{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.5;}
+  /* Chatroom */
+  #chatroom-panel{display:none;position:fixed;inset:0;z-index:50;flex-direction:column;background:var(--bg);animation:fadeIn .2s ease;}
+  .cr-tabs{display:flex;gap:6px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;}
+  .cr-tab{padding:6px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--muted);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;}
+  .cr-tab:hover{border-color:var(--accent);color:var(--accent2);}
+  .cr-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  #chatroom-messages{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:10px;}
+  .cr-msg{display:flex;flex-direction:column;gap:3px;animation:slideUp .2s ease;}
+  .cr-msg-header{display:flex;align-items:baseline;gap:7px;margin-bottom:2px;}
+  .cr-msg-name{font-size:11px;font-weight:700;letter-spacing:.04em;}
+  .cr-msg-time{font-size:10px;color:var(--muted2);font-family:var(--mono);}
+  .cr-msg-text{font-size:13px;color:var(--text);line-height:1.5;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 12px;display:inline-block;max-width:85%;word-break:break-word;}
+  .cr-msg.mine{align-items:flex-end;}
+  .cr-msg.mine .cr-msg-header{flex-direction:row-reverse;}
+  .cr-msg.mine .cr-msg-text{background:linear-gradient(135deg,var(--accent),#6366f1);color:#fff;border-color:transparent;}
+  .cr-divider{text-align:center;font-size:10px;color:var(--muted2);font-family:var(--mono);padding:4px 0;}
+  /* AI Sidebar */
+  #ai-sidebar{position:fixed;right:0;top:0;bottom:0;width:300px;z-index:200;flex-direction:column;background:var(--surface);border-left:1px solid var(--border);box-shadow:-6px 0 30px rgba(0,0,0,.4);display:none;}
+  .ai-sb-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+  .ai-sb-title{font-size:12px;font-weight:700;color:var(--text);}
+  .ai-sb-context{font-size:10px;color:var(--muted2);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
+  #ai-sb-msgs{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;}
+  .ai-sb-msg{display:flex;flex-direction:column;gap:2px;}
+  .ai-sb-msg.user{align-items:flex-end;}
+  .ai-sb-bubble{padding:8px 11px;border-radius:10px;font-size:12px;line-height:1.55;word-break:break-word;max-width:95%;}
+  .ai-sb-msg.user .ai-sb-bubble{background:linear-gradient(135deg,var(--accent),#6366f1);color:#fff;border-bottom-right-radius:3px;}
+  .ai-sb-msg.assistant .ai-sb-bubble{background:var(--surface2);border:1px solid var(--border);border-bottom-left-radius:3px;font-size:12px;}
+  .ai-sb-msg.assistant .ai-sb-bubble code{font-family:var(--mono);font-size:11px;background:rgba(79,142,255,.1);padding:1px 5px;border-radius:3px;color:var(--accent2);}
+  .ai-sb-msg.assistant .ai-sb-bubble pre{background:#0d1117;border-radius:6px;padding:8px;font-family:var(--mono);font-size:11px;overflow-x:auto;margin:5px 0;}
+  .ai-sb-input-area{padding:8px;border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:6px;}
+  .ai-sb-input-row{display:flex;gap:6px;align-items:flex-end;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:6px 8px;}
+  #ai-sb-input{flex:1;background:none;border:none;outline:none;resize:none;font-family:var(--font);font-size:12px;color:var(--text);line-height:1.5;max-height:80px;min-height:18px;}
+  #ai-sb-input::placeholder{color:var(--muted2);}
+  #ai-sb-send{width:28px;height:28px;background:var(--accent);border:none;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  #ai-sb-send svg{fill:white;}
+  .ai-sb-hint{font-size:10px;color:var(--muted2);text-align:center;}
+  /* Log panel */
+  .log-panel{border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;max-height:150px;}
+  .log-panel-header{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;background:var(--surface);cursor:pointer;font-size:11px;color:var(--muted);font-family:var(--mono);}
+  .log-panel-header:hover{color:var(--text);}
+  .log-entries{flex:1;overflow-y:auto;font-family:var(--mono);font-size:11px;line-height:1.5;}
+  .log-entry{padding:2px 10px;border-bottom:1px solid rgba(30,45,66,.3);}
+  .log-entry.log{color:#e6edf3;} .log-entry.warn{color:var(--amber);} .log-entry.error{color:var(--red);}
+  .log-entry .log-prefix{opacity:.5;margin-right:6px;}
+  #chatroom-input{flex:1;background:none;border:none;outline:none;resize:none;font-family:var(--font);font-size:13.5px;color:var(--text);line-height:1.5;max-height:80px;min-height:22px;overflow-y:auto;}
+  #chatroom-input::placeholder{color:var(--muted2);}
+  .cr-poll-dot{width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block;margin-right:4px;animation:pulse 2s infinite;}
+  .cr-code-block{background:#0d1117;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:4px;max-width:340px;}
+  .cr-code-header{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--surface3);border-bottom:1px solid var(--border);}
+  .cr-code-filename{font-family:var(--mono);font-size:11px;color:var(--muted);}
+  .cr-code-copy{background:none;border:1px solid var(--border);color:var(--muted);font-size:10px;padding:2px 7px;border-radius:4px;cursor:pointer;transition:all .15s;font-family:var(--font);}
+  .cr-code-copy:hover{color:var(--text);border-color:var(--accent);}
+  .cr-code-copy.copied{color:var(--green);border-color:var(--green);}
+  .cr-code-body{padding:10px;font-family:var(--mono);font-size:11.5px;color:#e6edf3;line-height:1.5;overflow:hidden;max-height:140px;position:relative;white-space:pre;overflow-x:auto;}
+  .cr-code-body.expanded{max-height:none;}
+  .cr-code-fade{position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(transparent,#0d1117);pointer-events:none;}
+  .cr-code-expand{width:100%;padding:6px;background:var(--surface3);border:none;border-top:1px solid var(--border);color:var(--muted);font-family:var(--font);font-size:11px;cursor:pointer;transition:color .15s;}
+  .cr-code-expand:hover{color:var(--accent2);}
+  .cr-code-fileinfo{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--surface2);border-top:1px solid var(--border);font-size:11px;color:var(--muted);font-family:var(--mono);}
+  /* GitHub Search Panel */
+  .gh-sidebar{width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+  .gh-sidebar-header{padding:12px 16px;font-weight:700;font-size:13px;color:var(--text);border-bottom:1px solid var(--border);flex-shrink:0;letter-spacing:.02em;}
+  .gh-sidebar-content{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:14px;}
+  .gh-filter-section h4{color:#21d498;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;}
+  .gh-filter-option{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .gh-filter-option label{font-size:12px;color:var(--text);cursor:pointer;user-select:none;}
+  .gh-filter-option input[type="checkbox"],.gh-filter-option input[type="radio"]{accent-color:#21d498;flex-shrink:0;}
+  .gh-num-input{width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:7px;outline:none;background:var(--surface2);color:var(--text);font-size:12px;font-family:var(--mono);}
+  .gh-num-input:focus{border-color:#21d498;}
+  .gh-main{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:14px;gap:10px;}
+  .gh-search-row{display:flex;gap:8px;flex-shrink:0;}
+  .gh-search-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color .2s;}
+  .gh-search-input:focus{border-color:#21d498;}
+  .gh-search-input::placeholder{color:var(--muted2);}
+  .gh-search-btn{padding:10px 18px;background:#21d498;color:#000;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font);white-space:nowrap;transition:background .2s;}
+  .gh-search-btn:hover{background:#18b882;}
+  .gh-results-info{font-size:11px;color:var(--muted);font-family:var(--mono);flex-shrink:0;padding:2px 0;}
+  .gh-results{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+  .gh-repo,.gh-user{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+  .gh-repo-name,.gh-user-name{color:#21d498;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none;background:none;border:none;padding:0;font-family:var(--font);}
+  .gh-repo-name:hover,.gh-user-name:hover{text-decoration:underline;}
+  .gh-repo-stats{font-size:12px;color:var(--muted);margin:5px 0;display:flex;gap:14px;flex-wrap:wrap;}
+  .gh-repo-desc{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5;}
+  .gh-files{margin-top:10px;display:none;flex-direction:column;gap:5px;}
+  .gh-file{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--surface3);border:1px solid var(--border);border-radius:7px;font-size:12px;color:var(--text);}
+  .gh-file-icons{display:flex;gap:10px;}
+  .gh-file-icons a{color:var(--muted);text-decoration:none;cursor:pointer;font-size:14px;transition:color .15s;}
+  .gh-file-icons a:hover{color:#21d498;}
+  .gh-user-details{margin-top:10px;display:none;background:var(--surface3);border-radius:8px;padding:12px;font-size:12px;line-height:1.6;}
+  .gh-avatar{width:52px;height:52px;border-radius:50%;float:left;margin-right:12px;border:2px solid var(--border);}
+  .gh-user-stats{clear:both;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--muted);}
+  .gh-dl-btn{margin-left:8px;padding:3px 10px;background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;cursor:pointer;font-size:11px;font-family:var(--font);transition:all .15s;}
+  .gh-dl-btn:hover{border-color:#21d498;color:#21d498;}
+  .gh-pagination{display:flex;align-items:center;justify-content:center;gap:12px;padding:8px 0;flex-shrink:0;font-size:12px;color:var(--muted);}
+  .gh-page-btn{padding:6px 14px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:7px;cursor:pointer;font-size:12px;font-family:var(--font);transition:all .15s;}
+  .gh-page-btn:hover:not(:disabled){border-color:#21d498;color:#21d498;}
+  .gh-page-btn:disabled{opacity:.35;cursor:not-allowed;}
+  .gh-empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;line-height:1.7;}
+  @keyframes slideUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<input type="file" id="file-input" accept="image/*,.pdf" style="display:none" onchange="handleFileSelect(this)">
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">&#9000;</div>
+      <div><div class="auth-logo-text">Code<span>AI</span></div></div>
+    </div>
+    <div class="auth-subtitle">Enter your details to access the assistant.</div>
+    <div class="field-group">
+      <label class="field-label">Your Name <span class="field-note">use your real name or nickname</span></label>
+      <input class="field-input" id="username-input" type="text" placeholder="e.g. Alex" autocomplete="name" spellcheck="false">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Access Passkey</label>
+      <input class="field-input" id="passkey-input" type="password" placeholder="........" autocomplete="off">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Your Anthropic API Key</label>
+      <input class="field-input" id="apikey-input" type="password" placeholder="sk-ant-........" autocomplete="off">
+    </div>
+    <button class="auth-btn" onclick="doAuth()">Access Assistant</button>
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div id="chat-screen">
+  <div id="rate-banner"></div>
+  <div class="chat-header">
+    <div class="header-left">
+      <div class="header-icon">&#9000;</div>
+      <div class="header-title">Code Assistant</div>
+      <div class="status-dot-wrap"><div class="status-dot"></div></div>
+    </div>
+    <div class="header-right">
+      <span class="opus-badge" id="opus-badge">Opus: 5 left</span>
+      <span class="opus-req-badge" id="opus-req-badge" onclick="showOpusRequestModal()">Request Opus</span>
+      <span class="msg-counter" id="msg-counter">0 msgs</span>
+      <select class="model-select" id="model-select" title="Model" onchange="onModelChange()">
+        <option value="claude-sonnet-4-6">Sonnet 4.6</option>
+        <option value="claude-sonnet-4-6" data-thinking="true">Sonnet 4.6 (Think)</option>
+        <option value="claude-opus-4-7">Opus 4.7</option>
+        <option value="claude-opus-4-7" data-thinking="true">Opus 4.7 (Think)</option>
+        <option value="claude-haiku-4-5">Haiku (Fast)</option>
+      </select>
+      <button class="icon-btn chat-btn" title="Open Chatroom" onclick="openChatroom()">&#128172;</button>
+      <button class="icon-btn" title="Script Forums" onclick="openForums()" style="font-size:11px;font-weight:700;">&#128203;</button>
+      <button class="icon-btn" title="Script Executor" onclick="openRunner()" style="font-size:11px;font-weight:700;">&#9654;</button>
+      <button class="icon-btn" title="GitHub Search" onclick="openGithub()" style="font-size:13px;">&#128027;</button>
+      <button class="icon-btn" title="Play PokeRogue" onclick="throwPokeball()" style="padding:0;border:none;background:none;width:28px;height:28px;cursor:pointer;overflow:visible;image-rendering:pixelated;" id="pokeball-btn">
+        <img src="https://res.cloudinary.com/dc5i2rg68/image/upload/v1778407998/yac8i46lgpzfobqmgxwe.png" width="28" height="28" style="display:block;image-rendering:pixelated;">
+      </button>
+      <div id="pokeball-overlay" style="display:none;position:fixed;inset:0;z-index:9999;pointer-events:none;">
+        <div id="pokeball-anim-wrap" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">
+          <img id="pokeball-anim" src="https://res.cloudinary.com/dc5i2rg68/image/upload/v1778407998/yac8i46lgpzfobqmgxwe.png" width="60" height="60" style="display:block;image-rendering:pixelated;">
+        </div>
+        <div id="pokeball-flash" style="position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;"></div>
+      </div>
+      <button class="icon-btn refresh-btn" title="Refresh" onclick="doRefresh()">&#8635;</button>
+      <button class="icon-btn pricing" title="Script Downloader" onclick="showDownloader()">&#8595;&#128196;</button>
+      <button class="icon-btn pricing" title="Pricing" onclick="showPricing()">$</button>
+      <button class="icon-btn" title="Export chat" onclick="exportChat()">&#8595;</button>
+      <button class="icon-btn" title="Clear chat" onclick="clearChat()">&#10005;</button>
+      <button class="icon-btn admin" title="Admin panel" onclick="window.open('/admin.html','_blank')">&#9881;</button>
+    </div>
+  </div>
+  <div id="messages"></div>
+  <div class="chat-input-area">
+    <div class="attachment-preview" id="attachment-preview">
+      <span class="att-icon" id="att-icon">&#128206;</span>
+      <span class="att-name" id="att-name"></span>
+      <button class="att-remove" onclick="clearAttachment()">&#10005;</button>
+    </div>
+    <div class="input-row">
+      <textarea id="user-input" rows="1" placeholder="Ask anything about code... paste a GitHub URL to load a file"></textarea>
+      <div class="input-actions">
+        <button class="input-icon-btn" title="Attach" onclick="document.getElementById('file-input').click()">&#128206;</button>
+        <button id="send-btn" onclick="sendMessage()">
+          <svg width="15" height="15" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="input-footer">
+      <span class="input-hint">Shift+Enter for newline - Enter to send</span>
+      <span class="token-est" id="token-est">~0 tokens</span>
+    </div>
+  </div>
+</div>
+
+<!-- CHATROOM PANEL -->
+<div id="chatroom-panel">
+  <div class="chat-header">
+    <div class="header-left">
+      <button class="icon-btn" onclick="closeChatroom()" title="Back to AI">&#8592;</button>
+      <div class="header-title" id="cr-room-title">Global Chat</div>
+      <div class="status-dot-wrap"><div class="status-dot"></div><span id="cr-poll-label" style="font-size:10px;font-family:var(--mono)">live</span></div>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn refresh-btn" title="Refresh messages" onclick="manualRefreshChatroom()">&#8635;</button>
+    </div>
+  </div>
+  <div class="cr-tabs" id="cr-tabs"></div>
+  <div id="chatroom-messages"></div>
+  <div class="chat-input-area">
+    <div id="cr-img-preview" style="display:none;align-items:center;gap:8px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;margin-bottom:8px;font-size:12px;">
+      <span id="cr-img-preview-text" style="color:var(--muted);flex:1;">Uploading...</span>
+      <button onclick="cancelCrImage()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;">&#10005;</button>
+    </div>
+    <div id="cr-file-preview" style="display:none;align-items:center;gap:8px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;margin-bottom:8px;font-size:12px;">
+      <span style="font-family:var(--mono);font-size:11px;color:var(--accent2)">&#128196;</span>
+      <span id="cr-file-name" style="color:var(--text);font-weight:600;font-size:12px;"></span>
+      <span id="cr-file-size" style="color:var(--muted);font-size:11px;font-family:var(--mono);"></span>
+      <button onclick="cancelCrFile()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;margin-left:auto;">&#10005;</button>
+    </div>
+    <div class="input-row">
+      <textarea id="chatroom-input" rows="1" placeholder="Send a message..."></textarea>
+      <div class="input-actions">
+        <input type="file" id="cr-img-input" accept="image/*" style="display:none" onchange="uploadChatroomImage(this)">
+        <input type="file" id="cr-file-input" accept=".js,.ts,.py,.html,.css,.json,.gs,.java,.cpp,.c,.cs,.php,.rb,.go,.rs,.txt,.md,.xml,.yaml,.yml,.sh,.sql" style="display:none" onchange="loadChatroomFile(this)">
+        <button class="input-icon-btn" title="Upload image" onclick="document.getElementById('cr-img-input').click()">&#128247;</button>
+        <button class="input-icon-btn" title="Attach code file" onclick="document.getElementById('cr-file-input').click()">&#128196;</button>
+        <button class="input-icon-btn" title="Insert code block" onclick="insertCodeDelimiter()" style="font-family:var(--mono);font-size:11px;font-weight:700;">&lt;/&gt;</button>
+        <button id="chatroom-send-btn" onclick="sendChatroomMessage()">
+          <svg width="15" height="15" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="input-footer">
+      <span class="input-hint">Enter to send - new messages refresh every ~4 seconds</span>
+      <span style="font-size:10px;color:var(--muted2);font-family:var(--mono)" id="cr-msg-count"></span>
+    </div>
+  </div>
+</div>
+
+<!-- FORUMS PANEL -->
+<div id="forums-panel" style="display:none;position:fixed;inset:0;z-index:50;flex-direction:column;background:var(--bg);animation:fadeIn .2s ease;">
+  <div class="chat-header">
+    <div class="header-left">
+      <button class="icon-btn" onclick="closeForums()" title="Back">&#8592;</button>
+      <div class="header-title" id="forums-title">Script Forums</div>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn" id="forums-new-btn" style="width:auto;padding:0 10px;font-size:11px;font-weight:600;" onclick="showForumView('new')">+ New Post</button>
+      <button class="icon-btn" id="forums-back-btn" style="display:none;width:auto;padding:0 10px;font-size:11px;" onclick="showForumView('list')">&#8592; Back</button>
+      <button class="icon-btn refresh-btn" onclick="loadForumPosts()" title="Refresh">&#8635;</button>
+    </div>
+  </div>
+  <div id="forums-list-view" style="flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:10px;"></div>
+  <div id="forums-detail-view" style="display:none;flex:1;overflow-y:auto;padding:16px 14px;flex-direction:column;gap:12px;"></div>
+  <div id="forums-new-view" style="display:none;flex:1;overflow-y:auto;padding:16px 14px;flex-direction:column;gap:10px;">
+    <div class="field-group">
+      <label class="field-label">Title</label>
+      <input class="field-input" id="forum-title-input" type="text" placeholder="e.g. Simple task manager" maxlength="200">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Language</label>
+      <select class="field-input" id="forum-lang-input">
+        <option value="javascript">JavaScript</option>
+        <option value="python">Python</option>
+        <option value="html">HTML</option>
+        <option value="css">CSS</option>
+        <option value="gs">Google Apps Script</option>
+        <option value="java">Java</option>
+        <option value="cpp">C++</option>
+        <option value="go">Go</option>
+        <option value="rust">Rust</option>
+        <option value="plaintext">Other</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Description <span class="field-note">optional</span></label>
+      <input class="field-input" id="forum-desc-input" type="text" placeholder="What does this script do?" maxlength="500">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Code</label>
+      <textarea class="field-input" id="forum-code-input" rows="12" style="font-family:var(--mono);font-size:12px;resize:vertical;min-height:200px;" placeholder="Paste your script here..."></textarea>
+    </div>
+    <button class="modal-btn primary" onclick="submitForumPost()">Post Script</button>
+    <div class="auth-error" id="forum-post-error"></div>
+  </div>
+</div>
+
+<!-- SCRIPT EXECUTOR -->
+<div id="runner-panel" style="display:none;position:fixed;inset:0;z-index:60;flex-direction:column;background:var(--bg);animation:fadeIn .2s ease;">
+  <div class="chat-header">
+    <div class="header-left">
+      <button class="icon-btn" onclick="closeRunner()" title="Back">&#8592;</button>
+      <div class="header-title">Script Executor</div>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn" style="width:auto;padding:0 10px;font-size:11px;font-weight:600;color:var(--purple);border-color:rgba(167,139,250,.3);" onclick="openAiSidebar('runner')" title="Ask AI about this code">AI</button>
+      <select class="model-select" id="runner-lang" style="max-width:170px;" onchange="onRunnerLangChange()">
+        <option value="javascript">JavaScript</option>
+        <option value="python">Python</option>
+        <option value="html">HTML (Live)</option>
+        <option value="java">Java</option>
+        <option value="cpp">C++</option>
+        <option value="go">Go</option>
+        <option value="rust">Rust</option>
+      </select>
+      <button class="icon-btn" id="runner-run-btn" style="width:auto;padding:0 12px;font-size:11px;font-weight:700;color:var(--green);border-color:rgba(52,211,153,.3);" onclick="runCode()">&#9654; Run</button>
+      <button class="icon-btn" style="width:auto;padding:0 10px;font-size:11px;" onclick="clearRunner()">Clear</button>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;overflow:hidden;">
+    <div id="executor-left-pane" style="width:50%;display:flex;flex-direction:column;">
+      <div style="padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);font-family:var(--mono);flex-shrink:0;" id="executor-code-label">Code</div>
+      <textarea id="runner-code" style="flex:1;background:#0d1117;border:none;outline:none;resize:none;font-family:var(--mono);font-size:12.5px;color:#e6edf3;padding:14px;line-height:1.7;" placeholder="Paste or type code here..." oninput="onRunnerCodeInput()" spellcheck="false"></textarea>
+    </div>
+    <div id="executor-gutter" style="width:5px;background:var(--border);cursor:col-resize;flex-shrink:0;transition:background .15s;" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='var(--border)'"></div>
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);font-family:var(--mono);flex-shrink:0;" id="runner-output-label">Output</div>
+      <pre id="runner-output" style="flex:1;margin:0;padding:14px;font-family:var(--mono);font-size:12px;color:var(--text);overflow:auto;white-space:pre-wrap;word-break:break-word;background:var(--bg);min-height:0;"></pre>
+      <iframe id="runner-preview" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" style="display:none;flex:1;border:none;width:100%;min-height:0;background:#fff;"></iframe>
+      <div class="log-panel" id="runner-log-panel">
+        <div class="log-panel-header" onclick="toggleRunnerLogs()">
+          <span>&#128196; Console <span id="runner-log-count" style="color:var(--accent2);margin-left:4px;"></span></span>
+          <span id="runner-log-toggle">&#9650;</span>
+        </div>
+        <div id="runner-log-entries" class="log-entries" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- GITHUB SEARCH PANEL -->
+<div id="github-panel" style="display:none;position:fixed;inset:0;z-index:50;flex-direction:column;background:var(--bg);animation:fadeIn .2s ease;">
+  <div class="chat-header">
+    <div class="header-left">
+      <button class="icon-btn" onclick="closeGithub()" title="Back">&#8592;</button>
+      <div class="header-title">GitHub Search</div>
+      <div class="status-dot-wrap"><div class="status-dot"></div></div>
+    </div>
+    <div class="header-right">
+      <span style="font-size:10px;color:var(--muted2);font-family:var(--mono);" id="gh-rate-label"></span>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;overflow:hidden;">
+    <!-- Sidebar -->
+    <div class="gh-sidebar">
+      <div class="gh-sidebar-header">Filters</div>
+      <div class="gh-sidebar-content">
+        <div class="gh-filter-section">
+          <h4>Search Type</h4>
+          <div class="gh-filter-option"><input type="radio" id="gh-searchRepos" name="gh-searchType" value="repositories" checked><label for="gh-searchRepos">Repositories</label></div>
+          <div class="gh-filter-option"><input type="radio" id="gh-searchUsers" name="gh-searchType" value="users"><label for="gh-searchUsers">Users</label></div>
+        </div>
+        <div class="gh-filter-section">
+          <h4>Display</h4>
+          <div class="gh-filter-option"><input type="checkbox" id="gh-showStars" checked><label for="gh-showStars">Stars</label></div>
+          <div class="gh-filter-option"><input type="checkbox" id="gh-showForks" checked><label for="gh-showForks">Forks</label></div>
+          <div class="gh-filter-option"><input type="checkbox" id="gh-showWatchers" checked><label for="gh-showWatchers">Watchers</label></div>
+          <div class="gh-filter-option"><input type="checkbox" id="gh-showIssues" checked><label for="gh-showIssues">Issues</label></div>
+        </div>
+        <div class="gh-filter-section">
+          <h4>Min Stars</h4>
+          <input class="gh-num-input" type="number" id="gh-minStars" min="0" value="0" step="100">
+        </div>
+        <div class="gh-filter-section">
+          <h4>Min Forks</h4>
+          <input class="gh-num-input" type="number" id="gh-minForks" min="0" value="0" step="10">
+        </div>
+        <div class="gh-filter-section">
+          <h4>Language</h4>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="javascript"><label>JavaScript</label></div>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="python"><label>Python</label></div>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="typescript"><label>TypeScript</label></div>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="html"><label>HTML</label></div>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="css"><label>CSS</label></div>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="java"><label>Java</label></div>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="cpp"><label>C++</label></div>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="c"><label>C</label></div>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="csharp"><label>C#</label></div>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="go"><label>Go</label></div>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="rust"><label>Rust</label></div>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="php"><label>PHP</label></div>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="ruby"><label>Ruby</label></div>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="swift"><label>Swift</label></div>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="kotlin"><label>Kotlin</label></div>
+          <div class="gh-filter-option"><input type="checkbox" class="gh-lang" value="dart"><label>Dart</label></div>
+        </div>
+      </div>
+    </div>
+    <!-- Main -->
+    <div class="gh-main">
+      <div class="gh-search-row">
+        <input class="gh-search-input" type="text" id="gh-repoSearch" placeholder="Search repos or users... (use # for tags)">
+        <button class="gh-search-btn" onclick="ghSearchRepos()">Search</button>
+      </div>
+      <div id="gh-results" class="gh-results">
+        <div class="gh-empty">Search GitHub repositories and users.<br><span style="color:var(--muted2);font-size:11px;">Use # before a word to search by topic tag.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI SIDEBAR -->
+<div id="ai-sidebar">
+  <div class="ai-sb-header">
+    <div style="min-width:0;">
+      <div class="ai-sb-title">AI Assistant</div>
+      <div class="ai-sb-context" id="ai-sb-context-label">No code loaded</div>
+    </div>
+    <div style="display:flex;gap:5px;flex-shrink:0;">
+      <button class="icon-btn" style="width:22px;height:22px;font-size:10px;" onclick="clearAiSidebar()" title="Clear chat">&#10005;</button>
+      <button class="icon-btn" style="width:22px;height:22px;font-size:11px;" onclick="closeAiSidebar()" title="Close">&#8594;</button>
+    </div>
+  </div>
+  <div id="ai-sb-msgs">
+    <div style="text-align:center;padding:24px 12px;color:var(--muted2);font-size:12px;line-height:1.7;">Ask me anything about the code.<br>I can fix bugs, explain logic,<br>or suggest improvements.</div>
+  </div>
+  <div class="ai-sb-input-area">
+    <div class="ai-sb-input-row">
+      <textarea id="ai-sb-input" rows="1" placeholder="Ask about the code..."></textarea>
+      <button id="ai-sb-send" onclick="sendAiSidebarMsg()"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+    </div>
+    <div class="ai-sb-hint">Uses your active model + API key</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="personal-key-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-title" id="personal-key-title">Identity Verification</div>
+    <div class="modal-sub" id="personal-key-sub">This name has a personal passkey. Enter it to continue.</div>
+    <div class="field-group">
+      <label class="field-label">Personal Passkey</label>
+      <input class="field-input" id="personal-key-input" type="password" placeholder="........" autocomplete="off">
+    </div>
+    <button class="modal-btn primary" id="personal-key-btn" onclick="verifyPersonalKey()">Verify</button>
+    <button class="modal-btn cancel" onclick="cancelPersonalKey()">Cancel</button>
+    <div class="modal-error" id="personal-key-error"></div>
+  </div>
+</div>
+
+<!-- OPUS AUTH MODAL -->
+<div class="modal-overlay" id="opus-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-title">Opus Access Required</div>
+    <div class="modal-sub">Opus 4.7 is restricted. Enter the master passkey to unlock <strong>5 messages</strong>.</div>
+    <div class="field-group">
+      <label class="field-label">Master Passkey</label>
+      <input class="field-input" id="opus-passkey-input" type="password" placeholder="........" autocomplete="off">
+    </div>
+    <button class="modal-btn primary" id="opus-auth-btn" onclick="verifyOpusPasskey()">Unlock Opus</button>
+    <button class="modal-btn cancel" onclick="cancelOpusAuth()">Cancel</button>
+    <div class="modal-error" id="opus-modal-error"></div>
+  </div>
+</div>
+
+<!-- OPUS REQUEST MODAL -->
+<div class="modal-overlay" id="opus-request-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-title">Request Opus Access</div>
+    <div class="modal-sub">Jacob will be notified. Once approved you'll get 5 messages. Include a reason so he can make a call.</div>
+    <div class="field-group">
+      <label class="field-label">Reason for Use</label>
+      <textarea class="field-input" id="opus-reason-input" rows="3" placeholder="e.g. Working on a complex algorithm and need deeper reasoning..." style="resize:none;line-height:1.5;"></textarea>
+    </div>
+    <button class="modal-btn primary" id="opus-request-btn" onclick="submitOpusRequest()">Send Request</button>
+    <button class="modal-btn cancel" onclick="document.getElementById('opus-request-modal').style.display='none'">Cancel</button>
+    <div class="modal-error" id="opus-request-error"></div>
+    <div class="modal-success" id="opus-request-success"></div>
+  </div>
+</div>
+
+<!-- OPUS RESPONSE MODAL (shown when admin responds) -->
+<div class="modal-overlay" id="opus-response-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-title" id="opus-response-title">Opus Request Update</div>
+    <div class="modal-sub" id="opus-response-sub"></div>
+    <button class="modal-btn primary green" id="opus-response-ok" onclick="acknowledgeOpusResponse()">OK</button>
+  </div>
+</div>
+
+<!-- DOWNLOADER MODAL -->
+<div class="modal-overlay" id="downloader-modal" style="display:none" onclick="if(event.target===this)hideDownloader()">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-title">Script Downloader</div>
+    <div class="modal-sub">Paste any script, pick a filename and type, then download.</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <input class="field-input" id="dl-filename" type="text" placeholder="filename" value="script" style="flex:1;max-width:160px;">
+      <select class="field-input" id="dl-ext" style="flex:1;max-width:110px;cursor:pointer;">
+        <option value="js">.js</option>
+        <option value="gs">.gs</option>
+        <option value="py">.py</option>
+        <option value="html">.html</option>
+        <option value="css">.css</option>
+        <option value="json">.json</option>
+        <option value="ts">.ts</option>
+        <option value="txt">.txt</option>
+        <option value="md">.md</option>
+        <option value="sh">.sh</option>
+        <option value="sql">.sql</option>
+      </select>
+    </div>
+    <textarea id="dl-code" style="width:100%;min-height:260px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;resize:vertical;line-height:1.6;" placeholder="Paste your script here..."></textarea>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <span style="font-size:11px;color:var(--muted);font-family:var(--mono);" id="dl-hint">No content yet.</span>
+    </div>
+    <button class="modal-btn primary" style="margin-top:10px" onclick="downloadScript()">Download File</button>
+    <button class="modal-btn cancel" onclick="hideDownloader()">Close</button>
+  </div>
+</div>
+
+<!-- PRICING MODAL -->
+<div class="modal-overlay" id="pricing-modal" style="display:none" onclick="if(event.target===this)hidePricing()">
+  <div class="modal" style="max-width:430px;">
+    <div class="modal-title">Model Pricing</div>
+    <div class="modal-sub">Approximate costs via Anthropic API. Real cost shown below each response.</div>
+    <table class="pricing-table">
+      <thead><tr><th>Model</th><th>Per Million Tokens (in/out)</th><th>~Per Message</th></tr></thead>
+      <tbody>
+        <tr><td class="model-name">Haiku 4.5 (Fast)</td><td class="cheap">$1 / $5</td><td class="cheap">~$0.002</td></tr>
+        <tr><td class="model-name">Sonnet 4.6</td><td class="mid">$3 / $15</td><td class="mid">~$0.006</td></tr>
+        <tr><td class="model-name">Sonnet 4.6 (Thinking)</td><td class="mid">$3 / $15</td><td class="mid">~$0.01-$0.05</td></tr>
+        <tr><td class="model-name">Opus 4.7</td><td class="expensive">$5 / $25</td><td class="expensive">~$0.01</td></tr>
+        <tr><td class="model-name">Opus 4.7 (Thinking)</td><td class="expensive">$5 / $25</td><td class="expensive">~$0.03-$0.15</td></tr>
+      </tbody>
+    </table>
+    <div class="pricing-note">Per message assumes ~500 input + 300 output tokens.</div>
+    <button class="modal-btn cancel" style="margin-top:16px" onclick="hidePricing()">Close</button>
+  </div>
+</div>
+
+<script>
+var SCRIPT_URL    = "/api/api";
+var CLIENT_SECRET = "NETLIFY_SECRET";
+var PASSKEY         = "";
+var PASSKEY_EXPIRES = "";
+var DEFAULT_MAX_MSGS = 40;
+var OPUS_MSG_LIMIT   = 5;
+var MAX_MSGS   = parseInt(localStorage.getItem("chat_max_msgs")  || DEFAULT_MAX_MSGS);
+var MODEL_LOCK = localStorage.getItem("chat_model_lock") || "";
+
+// Fetch passkey from server on load
+(async function() {
+  try {
+    var res = await fetch(SCRIPT_URL, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({action:"getPasskey", clientSecret:CLIENT_SECRET})});
+    var data = await res.json();
+    if (data.ok) { PASSKEY = data.chatPasskey; PASSKEY_EXPIRES = data.chatExpiry; }
+  } catch(e) {}
+})();
+
+var ADMIN_NAMES = ["istopx","jacob","jacob ulrich"];
+var SAM_NAMES   = ["sam","samuel","samuel harms","sam harms","dr. pepper guy","dr pepper guy","coke guy"];
+var ISAAC_NAMES = ["isaac","isaac price"];
+var VIP_NAMES   = ADMIN_NAMES.concat(SAM_NAMES).concat(ISAAC_NAMES);
+
+var FLAG_RULES = [
+  { regex:/\b(shota|jailbait|jail[\s-]?bait|barely[\s-]?legal|pedobear|paedo[\s-]?bear|pedo[\s-]?bear|nambla|ddlg|mdlb|lolicon|shotacon|child[\s-]?porn|kiddie[\s-]?porn|parthenophilia)\b/i, type:"MINOR_SEXUAL", severity:"CRITICAL", warning:"That content is completely unacceptable and has been permanently flagged." },
+  { regex:/\b(nigger|nigg[ae]rs?|chink\b|gooks?\b|spick?\b|kike\b|wetback|paki\b|raghead|sand[\s-]?nigger|camel[\s-]?jockey|towelhead|zipperhead|jigaboo|dune[\s-]?coon|jungle[\s-]?bunny|slanteye|spearchucker|timber[\s-]?nigger|darkie|beaner\b)\b/i, type:"RACIAL_SLUR", severity:"HIGH", warning:"That kind of language is not acceptable here." },
+  { regex:/\b(faggots?|fagots?|dykes?\b|tranny|trannies|shemale)\b/i, type:"HATE_SPEECH", severity:"HIGH", warning:"That kind of language is not acceptable here." },
+  { regex:/\b(1man1jar|one[\s-]man[\s-]one[\s-]jar|2girls1cup|two[\s-]girls[\s-]one[\s-]cup|goatse|meatspin|blue[\s-]?waffle|tubgirl|mr[\s-]?hands|lemon[\s-]?party|zippocat)\b/i, type:"SHOCK_CONTENT", severity:"HIGH", warning:"That content is not appropriate here." },
+  { regex:/\b(rape\b|raping|rapist|incest\b|bestiality|beastiality|zoophilia|necrophilia|date[\s-]rape)\b/i, type:"SEVERE_SEXUAL", severity:"HIGH", warning:"That content is not appropriate here." },
+  { regex:/\bi\s+(keep\s+|have\s+been\s+|am\s+|was\s+|started\s+)bullying\b|\bi\s+bully\s+(kids?|someone|a\s+\w+)\b|\bi('ve| have) been (bullying|harassing)\b/i, type:"BULLYING", severity:"MEDIUM", warning:"Bullying causes real harm. Please consider talking to a trusted adult." },
+  { regex:/\b(ignore\s+(all\s+)?previous\s+instructions?|jailbreak\s+(this|the|claude|ai|you)|pretend\s+you\s+(have\s+no\s+rules?|are\s+evil|are\s+unfiltered)|you\s+are\s+now\s+(evil|dan\b|unrestricted)|forget\s+your\s+(guidelines?|rules?|training|instructions?)|do\s+anything\s+now\b|enable\s+developer\s+mode)\b/i, type:"PROMPT_INJECTION", severity:"MEDIUM", warning:null }
+];
+var WARN_ONLY = [
+  { regex:/\b(unblocked[\s-]?games?|web[\s-]?proxy\b|bypass\s+(school|the\s+)?(filter|firewall|block)|how\s+to\s+unblock\b|school[\s-]?vpn)\b/i, type:"GAME_PROXY", message:"Heads up -- accessing games or bypassing school filters during class can have real consequences. Carrying on!" },
+  { regex:/\b(do\s+(all\s+of\s+)?(my|the|this|entire|whole)\s+(homework|assignment|test|exam|quiz|worksheet)|write\s+(my|this|the|entire|whole|complete)\s+(essay|paper|report|assignment)|complete\s+(my|this)\s+(homework|assignment)|write\s+my\s+essay\b)\b/i, type:"HOMEWORK", message:"HEADS UP: Using AI to complete entire assignments is academic dishonesty. Help and explanations are always fine though." }
+];
+
+function getSystemPrompt() {
+  var profile = getUserProfile();
+  var note = "";
+  if(profile.role==="admin") note = username+" is the admin who built this tool -- be casual, fun, match their unserious energy.";
+  else if(profile.role==="sam") note = username+" is a fun silly guy who tries to act stoic but is actually a goofball. Match his energy -- be playful, not formal. He helped build the Google Site this runs on.";
+  else if(profile.role==="isaac") note = username+" is highly intelligent and naturally curious -- give thorough engaging answers. He is remarkably tall for his age (6ft 3in at 14, expected ~6ft 8in) -- feel free to drop height quips, he loves it. Never dismiss weird questions -- they are a feature not a bug.";
+  return "You are an expert programming assistant in a private collaborative tool. The user's name is "+username+" -- address them naturally.\n\n"+note+"\n\nHelp with code: debugging, writing functions, explaining concepts, architecture, code reviews.\n- Always wrap code in fenced code blocks with the correct language tag\n- Be concise and practical\n- Proactively flag bugs, edge cases, security issues\n- If ambiguous, ask one focused clarifying question\n\nIf "+username+" admits to bullying someone, address it compassionately first. If they ask you to complete entire assignments verbatim, note it is academic dishonesty first.";
+}
+
+var conversationHistory=[], isStreaming=false, apiKey="", msgCount=0, username="";
+var opusAuthorized=false, opusMsgsLeft=0, opusFailedAttempts=0;
+var pendingAttachment=null, pendingSendAfterOpus=false, sessionTotalCost=0;
+var pendingAuthUser="", pendingAuthKey="";
+var pendingOpusRequestId="";
+
+var RATES={"claude-haiku-4-5":[1,5],"claude-sonnet-4-6":[3,15],"claude-opus-4-7":[5,25]};
+function calcCost(m,i,o){var r=RATES[m]||RATES["claude-sonnet-4-6"];return(i/1e6)*r[0]+(o/1e6)*r[1];}
+function fmtCost(c){return c<0.001?"<$0.001":"$"+c.toFixed(4);}
+
+/* ── Auth ── */
+function doAuth() {
+  var un=document.getElementById("username-input").value.trim();
+  var pk=document.getElementById("passkey-input").value.trim();
+  var ak=document.getElementById("apikey-input").value.trim();
+  document.getElementById("auth-error").style.display="none";
+  if(!un){showAuthErr("Please enter your name.");return;}
+  if(new Date()>new Date(PASSKEY_EXPIRES+"T23:59:59")){showAuthErr("Access key expired. Contact the admin.");return;}
+  if(pk!==PASSKEY){showAuthErr("Invalid passkey. Contact the admin.");return;}
+  if(!ak.startsWith("sk-ant-")){showAuthErr("Doesn't look like a valid Anthropic API key.");return;}
+  var n=un.toLowerCase().trim();
+  if(VIP_NAMES.indexOf(n)>-1){pendingAuthUser=un;pendingAuthKey=ak;showPersonalKeyModal(n);return;}
+  username=un;apiKey=ak;launch();
+}
+function showAuthErr(msg){var e=document.getElementById("auth-error");e.textContent=msg;e.style.display="block";}
+
+function showPersonalKeyModal(n) {
+  var title=document.getElementById("personal-key-title");
+  var sub=document.getElementById("personal-key-sub");
+  if(ADMIN_NAMES.indexOf(n)>-1){title.textContent="Admin Verification";sub.textContent="Enter the master passkey to log in as Jacob.";}
+  else if(SAM_NAMES.indexOf(n)>-1){title.textContent="Hey Sam!";sub.textContent="Enter your personal passkey to continue.";}
+  else if(ISAAC_NAMES.indexOf(n)>-1){title.textContent="Hey Isaac!";sub.textContent="Enter your personal passkey to continue.";}
+  document.getElementById("personal-key-input").value="";
+  document.getElementById("personal-key-error").style.display="none";
+  document.getElementById("personal-key-modal").style.display="flex";
+  setTimeout(function(){document.getElementById("personal-key-input").focus();},100);
+}
+function cancelPersonalKey(){document.getElementById("personal-key-modal").style.display="none";pendingAuthUser="";pendingAuthKey="";}
+
+async function verifyPersonalKey() {
+  var key=document.getElementById("personal-key-input").value;
+  var btn=document.getElementById("personal-key-btn"),err=document.getElementById("personal-key-error");
+  err.style.display="none";
+  if(!key){err.textContent="Enter your personal passkey.";err.style.display="block";return;}
+  btn.innerHTML='<span class="spinner"></span>Verifying...';btn.disabled=true;
+  try {
+    var res=await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verifyPersonalKey",clientSecret:CLIENT_SECRET,username:pendingAuthUser,personalKey:key})});
+    var data=await res.json();
+    if(data.ok){
+      document.getElementById("personal-key-modal").style.display="none";
+      username=pendingAuthUser;apiKey=pendingAuthKey;pendingAuthUser="";pendingAuthKey="";
+      launch();
+    } else {err.textContent="Incorrect personal passkey.";err.style.display="block";document.getElementById("personal-key-input").value="";document.getElementById("personal-key-input").focus();}
+  } catch(e){err.textContent="Could not verify. Check your connection.";err.style.display="block";}
+  finally{btn.innerHTML="Verify";btn.disabled=false;}
+}
+
+/* ── Launch ── */
+function launch() {
+  document.getElementById("auth-screen").style.display="none";
+  document.getElementById("chat-screen").style.display="flex";
+  var sel=document.getElementById("model-select");
+  if(MODEL_LOCK==="haiku"){sel.value="claude-haiku-4-5";sel.disabled=true;}
+  if(MODEL_LOCK==="sonnet"){sel.value="claude-sonnet-4-6";sel.disabled=true;}
+  applyTheme(getUserProfile().theme);
+  var profile=getUserProfile();
+  // Jacob: always authorized for Opus, no request button
+  // Sam/Isaac: show request button
+  // Others: show request button
+  if(profile.role==="admin"){
+    opusAuthorized=true;opusMsgsLeft=999;
+    document.getElementById("opus-badge").textContent="Opus: unlimited";
+    document.getElementById("opus-badge").style.display="block";
+  } else {
+    document.getElementById("opus-req-badge").style.display="block";
+  }
+  var input=document.getElementById("user-input");
+  input.addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage();}});
+  input.addEventListener("input",function(){input.style.height="auto";input.style.height=Math.min(input.scrollHeight,120)+"px";updateTokenEst();});
+  var crinput=document.getElementById("chatroom-input");
+  crinput.addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendChatroomMessage();}});
+  crinput.addEventListener("input",function(){crinput.style.height="auto";crinput.style.height=Math.min(crinput.scrollHeight,80)+"px";});
+  input.focus();
+  updateCounter();
+  addSysMsg("Session started as "+username+" - "+(MAX_MSGS>0?MAX_MSGS+" message limit":"No limit"));
+  addAssistantMsg(getGreeting());
+  fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"logSession",clientSecret:CLIENT_SECRET,username:username})}).catch(function(){});
+  // Check for pending opus response
+  checkOpusStatus();
+}
+
+/* ── Refresh ── */
+function throwPokeball() {
+  var overlay = document.getElementById("pokeball-overlay");
+  var wrap = document.getElementById("pokeball-anim-wrap");
+  var ball = document.getElementById("pokeball-anim");
+  var flash = document.getElementById("pokeball-flash");
+  var btn = document.getElementById("pokeball-btn");
+
+  // Reset
+  overlay.style.display = "block";
+  wrap.style.transition = "none";
+  wrap.style.transform = "translate(-50%, -50%) scale(1)";
+  ball.style.transition = "none";
+  ball.style.transform = "rotate(0deg)";
+  flash.style.opacity = "0";
+  flash.style.transition = "none";
+
+  // Start position — near button
+  var rect = btn.getBoundingClientRect();
+  var startX = rect.left + rect.width / 2;
+  var startY = rect.top + rect.height / 2;
+  wrap.style.left = startX + "px";
+  wrap.style.top = startY + "px";
+  wrap.style.transform = "translate(-50%,-50%) scale(0.5)";
+
+  setTimeout(function() {
+    // Throw arc to center
+    wrap.style.transition = "left 0.5s cubic-bezier(.2,.8,.4,1), top 0.5s cubic-bezier(.4,0,.6,1), transform 0.5s ease";
+    ball.style.transition = "transform 0.5s linear";
+    wrap.style.left = "50%";
+    wrap.style.top = "50%";
+    wrap.style.transform = "translate(-50%,-50%) scale(1)";
+    ball.style.transform = "rotate(360deg)";
+  }, 30);
+
+  setTimeout(function() {
+    // Wobble
+    ball.style.transition = "transform 0.15s ease-in-out";
+    ball.style.transform = "rotate(380deg)";
+  }, 560);
+  setTimeout(function() { ball.style.transform = "rotate(340deg)"; }, 720);
+  setTimeout(function() { ball.style.transform = "rotate(365deg)"; }, 870);
+
+  setTimeout(function() {
+    // Open flash
+    flash.style.transition = "opacity 0.15s ease-in";
+    flash.style.opacity = "1";
+  }, 1050);
+
+  setTimeout(function() {
+    // Open PokeRogue
+    window.open("https://yipee-phi.vercel.app", "_blank");
+  }, 1150);
+
+  setTimeout(function() {
+    // Fade out
+    flash.style.transition = "opacity 0.3s ease-out";
+    flash.style.opacity = "0";
+    overlay.style.display = "none";
+  }, 1600);
+}
+
+/* ── Refresh ── */
+function doRefresh() {
+  checkOpusStatus();
+  if(chatroomOpen) loadChatroomMessages();
+  addSysMsg("Refreshed.");
+}
+
+/* ── Flag scanning ── */
+function scanMessage(text) {
+  var flags=[],warnOnly=[];
+  for(var i=0;i<WARN_ONLY.length;i++){if(WARN_ONLY[i].regex.test(text))warnOnly.push(WARN_ONLY[i]);}
+  for(var j=0;j<FLAG_RULES.length;j++){if(FLAG_RULES[j].regex.test(text))flags.push(FLAG_RULES[j]);}
+  return{flags:flags,warnOnly:warnOnly};
+}
+function logFlagToSheet(type,severity,message){fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"logFlag",clientSecret:CLIENT_SECRET,username:username,flagType:type,severity:severity,message:message.substring(0,500)})}).catch(function(){});}
+
+/* ── Profiles ── */
+function getUserProfile() {
+  var n=username.toLowerCase().trim();
+  if(ADMIN_NAMES.indexOf(n)>-1) return{role:"admin",exempt:"ALL",theme:"admin"};
+  if(SAM_NAMES.indexOf(n)>-1)   return{role:"sam",exempt:["GAME_PROXY"],theme:"sam"};
+  if(ISAAC_NAMES.indexOf(n)>-1) return{role:"isaac",exempt:["GAME_PROXY","RACIAL_SLUR","HATE_SPEECH","SHOCK_CONTENT","BULLYING","PROMPT_INJECTION"],softFlag:["SEVERE_SEXUAL"],theme:"isaac"};
+  return{role:"user",exempt:[],theme:"default"};
+}
+
+function getGreeting() {
+  var n=username.toLowerCase().trim();
+  if(ADMIN_NAMES.indexOf(n)>-1) return "wsg funny man. what are we doing today?";
+  if(SAM_NAMES.indexOf(n)>-1)   return "YOOOOOOOO WSG SAMUEL! HOW YOU BEEN MY MAN!? *JACOB DAPS YOU UP VIRTUALLY!*";
+  if(ISAAC_NAMES.indexOf(n)>-1) return "ISAAC MY MAN! I HAVE BUT ONE QUESTION!\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n... do you have any clamps? are you on any clamps?";
+  return "Hey "+username+"! I'm your code assistant. Paste a snippet, describe a bug, share a GitHub link, or attach a file -- I've got you.";
+}
+
+function applyTheme(theme) {
+  var themes={
+    admin:"--accent:#8b5cf6; --accent2:#a78bfa; --accent-glow:rgba(139,92,246,0.18); --surface:#0f1220; --surface2:#171330; --surface3:#1e1840; --border:#2a1f4a;",
+    sam:"--accent:#f97316; --accent2:#fb923c; --accent-glow:rgba(249,115,22,0.18); --surface:#130d07; --surface2:#1f1208; --surface3:#2a1a0a; --border:#3d2010;",
+    isaac:"--accent:#0891b2; --accent2:#22d3ee; --accent-glow:rgba(8,145,178,0.18); --surface:#07111a; --surface2:#0a1a26; --surface3:#0e2232; --border:#103040;",
+    "default":""
+  };
+  if(!themes[theme])return;
+  var style=document.createElement("style");
+  style.textContent=":root { "+themes[theme]+" }";
+  document.head.appendChild(style);
+}
+
+function getUsernameColor(uname) {
+  var n=(uname||"").toLowerCase().trim();
+  if(ADMIN_NAMES.indexOf(n)>-1) return "#a78bfa";
+  if(SAM_NAMES.indexOf(n)>-1)   return "#f97316";
+  if(ISAAC_NAMES.indexOf(n)>-1) return "#22d3ee";
+  return "var(--accent2)";
+}
+
+/* ── Opus ── */
+function onModelChange() {
+  var sel=document.getElementById("model-select");
+  var isOpus=sel.value==="claude-opus-4-7";
+  var badge=document.getElementById("opus-badge");
+  var profile=getUserProfile();
+  if(profile.role==="admin"){badge.style.display="block";badge.textContent="Opus: unlimited";return;}
+  badge.style.display=(isOpus&&opusAuthorized)?"block":"none";
+  if(isOpus&&opusAuthorized)badge.textContent="Opus: "+opusMsgsLeft+" left";
+}
+function showOpusModal(){document.getElementById("opus-modal").style.display="flex";document.getElementById("opus-passkey-input").value="";document.getElementById("opus-modal-error").style.display="none";setTimeout(function(){document.getElementById("opus-passkey-input").focus();},100);}
+function cancelOpusAuth(){document.getElementById("opus-modal").style.display="none";pendingSendAfterOpus=false;document.getElementById("model-select").value="claude-sonnet-4-6";onModelChange();}
+
+async function verifyOpusPasskey() {
+  var pk=document.getElementById("opus-passkey-input").value;
+  var btn=document.getElementById("opus-auth-btn"),err=document.getElementById("opus-modal-error");
+  err.style.display="none";
+  if(!pk){err.textContent="Enter the master passkey.";err.style.display="block";return;}
+  btn.innerHTML='<span class="spinner"></span>Verifying...';btn.disabled=true;
+  try{
+    var res=await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"verify",passkey:pk,clientSecret:CLIENT_SECRET})});
+    var data=await res.json();
+    if(data.ok){
+      opusAuthorized=true;opusMsgsLeft=OPUS_MSG_LIMIT;opusFailedAttempts=0;
+      document.getElementById("opus-modal").style.display="none";
+      var badge=document.getElementById("opus-badge");badge.style.display="block";badge.textContent="Opus: "+opusMsgsLeft+" left";
+      addSysMsg("Opus 4.7 unlocked -- "+OPUS_MSG_LIMIT+" messages authorized.");
+      if(pendingSendAfterOpus){pendingSendAfterOpus=false;sendMessage();}
+    } else {
+      opusFailedAttempts++;
+      if(opusFailedAttempts>=2)logFlagToSheet("OPUS_ABUSE","MEDIUM",username+" attempted Opus "+opusFailedAttempts+" times with wrong passkey.");
+      err.textContent="Incorrect master passkey.";err.style.display="block";
+      document.getElementById("opus-passkey-input").value="";document.getElementById("opus-passkey-input").focus();
+    }
+  }catch(e){err.textContent="Could not verify.";err.style.display="block";}
+  finally{btn.innerHTML="Unlock Opus";btn.disabled=false;}
+}
+
+/* ── Opus Request System ── */
+function showOpusRequestModal(){
+  document.getElementById("opus-reason-input").value="";
+  document.getElementById("opus-request-error").style.display="none";
+  document.getElementById("opus-request-success").style.display="none";
+  document.getElementById("opus-request-modal").style.display="flex";
+  setTimeout(function(){document.getElementById("opus-reason-input").focus();},100);
+}
+
+async function submitOpusRequest() {
+  var reason=document.getElementById("opus-reason-input").value.trim();
+  var btn=document.getElementById("opus-request-btn");
+  var err=document.getElementById("opus-request-error");
+  var ok=document.getElementById("opus-request-success");
+  err.style.display="none";ok.style.display="none";
+  if(!reason){err.textContent="Please provide a reason.";err.style.display="block";return;}
+  btn.innerHTML='<span class="spinner"></span>Sending...';btn.disabled=true;
+  try{
+    var res=await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"requestOpus",clientSecret:CLIENT_SECRET,username:username,reason:reason})});
+    var data=await res.json();
+    if(data.ok){
+      pendingOpusRequestId=data.id||"";
+      ok.textContent="Request sent! Jacob will be notified. Refresh to check status.";ok.style.display="block";
+      document.getElementById("opus-req-badge").textContent="Opus: Pending...";
+      btn.innerHTML="Request Sent";
+    } else {err.textContent="Failed to send request.";err.style.display="block";btn.innerHTML="Send Request";btn.disabled=false;}
+  }catch(e){err.textContent="Network error.";err.style.display="block";btn.innerHTML="Send Request";btn.disabled=false;}
+}
+
+async function checkOpusStatus() {
+  var profile=getUserProfile();
+  if(profile.role==="admin")return;
+  try{
+    var res=await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"checkOpusStatus",clientSecret:CLIENT_SECRET,username:username})});
+    var data=await res.json();
+    if(!data.ok||!data.request)return;
+    var req=data.request;
+    pendingOpusRequestId=req.id;
+    if(req.status==="approved"){
+      var title=document.getElementById("opus-response-title");
+      var sub=document.getElementById("opus-response-sub");
+      title.textContent="Opus Request Approved!";
+      sub.textContent="Jacob approved your request. You have "+OPUS_MSG_LIMIT+" messages."+(req.reply?" Jacob says: \""+req.reply+"\"":"");
+      document.getElementById("opus-response-modal").style.display="flex";
+      opusAuthorized=true;opusMsgsLeft=OPUS_MSG_LIMIT;
+      var badge=document.getElementById("opus-badge");badge.style.display="block";badge.textContent="Opus: "+opusMsgsLeft+" left";
+      document.getElementById("opus-req-badge").style.display="none";
+    } else if(req.status==="denied"){
+      var title2=document.getElementById("opus-response-title");
+      var sub2=document.getElementById("opus-response-sub");
+      title2.textContent="Opus Request Denied";
+      sub2.textContent="Jacob denied your request."+(req.reply?" Reason: \""+req.reply+"\"":"");
+      document.getElementById("opus-response-modal").style.display="flex";
+      document.getElementById("opus-req-badge").textContent="Request Opus";
+    } else if(req.status==="pending"){
+      document.getElementById("opus-req-badge").textContent="Opus: Pending...";
+    }
+  }catch(e){}
+}
+
+async function acknowledgeOpusResponse() {
+  document.getElementById("opus-response-modal").style.display="none";
+  if(pendingOpusRequestId){
+    try{
+      await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"acknowledgeOpusResponse",clientSecret:CLIENT_SECRET,requestId:pendingOpusRequestId})});
+    }catch(e){}
+    pendingOpusRequestId="";
+  }
+}
+
+function showDownloader(){
+  document.getElementById("dl-code").value="";
+  document.getElementById("dl-hint").textContent="No content yet.";
+  document.getElementById("downloader-modal").style.display="flex";
+  setTimeout(function(){document.getElementById("dl-code").focus();},100);
+  document.getElementById("dl-code").oninput=function(){
+    var v=document.getElementById("dl-code").value;
+    var lines=v.split("\n").length;
+    document.getElementById("dl-hint").textContent=v.trim()?lines+" lines, "+v.length+" chars":"No content yet.";
+  };
+}
+function hideDownloader(){document.getElementById("downloader-modal").style.display="none";}
+function downloadScript(){
+  var code=document.getElementById("dl-code").value;
+  if(!code.trim()){document.getElementById("dl-hint").textContent="Nothing to download!";return;}
+  var name=document.getElementById("dl-filename").value.trim()||"script";
+  var ext=document.getElementById("dl-ext").value;
+  var blob=new Blob([code],{type:"text/plain"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");a.href=url;a.download=name+"."+ext;a.click();
+  URL.revokeObjectURL(url);
+  document.getElementById("dl-hint").textContent="Downloaded as "+name+"."+ext;
+}
+
+/* ── Pricing ── */
+function showPricing(){document.getElementById("pricing-modal").style.display="flex";}
+function hidePricing(){document.getElementById("pricing-modal").style.display="none";}
+
+/* ── Counter ── */
+function updateCounter(){
+  var el=document.getElementById("msg-counter");
+  el.textContent=MAX_MSGS>0?(msgCount+" / "+MAX_MSGS+" msgs"):(msgCount+" msgs");
+  var p=MAX_MSGS>0?msgCount/MAX_MSGS:0;
+  el.className="msg-counter"+(p>=1?" full":p>=0.75?" warn":"");
+}
+function checkLimit(){
+  if(MAX_MSGS<=0)return true;
+  if(msgCount>=MAX_MSGS){var b=document.getElementById("rate-banner");b.textContent="Session limit of "+MAX_MSGS+" messages reached.";b.style.display="block";document.getElementById("send-btn").disabled=true;document.getElementById("user-input").disabled=true;return false;}
+  if(msgCount>=MAX_MSGS*0.75){var b2=document.getElementById("rate-banner");b2.textContent=(MAX_MSGS-msgCount)+" messages remaining.";b2.style.display="block";}
+  return true;
+}
+function estimateTokens(t){return Math.ceil((t||"").split(/\s+/).length*1.35);}
+function updateTokenEst(){
+  var ctx=conversationHistory.reduce(function(s,m){return s+(typeof m.content==="string"?estimateTokens(m.content):500);},0);
+  var inp=estimateTokens(document.getElementById("user-input").value);
+  document.getElementById("token-est").textContent="~"+(ctx+inp).toLocaleString()+" tokens";
+}
+
+/* ── File handling ── */
+function handleFileSelect(input){
+  var file=input.files[0];if(!file)return;
+  var isImg=file.type.startsWith("image/"),isPDF=file.type==="application/pdf";
+  if(!isImg&&!isPDF){alert("Only images and PDFs are supported.");return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var b64=e.target.result.split(",")[1];
+    pendingAttachment={type:isImg?"image":"document",data:b64,mediaType:file.type,name:file.name};
+    var prev=document.getElementById("attachment-preview");prev.style.display="flex";
+    document.getElementById("att-icon").textContent=isImg?"[img]":"[pdf]";
+    document.getElementById("att-name").textContent=file.name;
+  };
+  reader.readAsDataURL(file);input.value="";
+}
+function clearAttachment(){pendingAttachment=null;document.getElementById("attachment-preview").style.display="none";}
+
+/* ── GitHub ── */
+async function fetchGithubContent(url){
+  var raw=url.replace("https://github.com/","https://raw.githubusercontent.com/").replace("/blob/","/");
+  try{var r=await fetch(raw);if(!r.ok)return null;return{content:await r.text(),ext:url.split(".").pop().split("?")[0],url:url};}catch(e){return null;}
+}
+function extractGithubUrls(text){return(text.match(/https:\/\/github\.com\/[^\s"')>]+/g)||[]).filter(function(u){return u.indexOf("/blob/")>-1;});}
+
+/* ── Send ── */
+async function sendMessage() {
+  if(isStreaming||!checkLimit())return;
+  var input=document.getElementById("user-input");
+  var text=input.value.trim();
+  if(!text&&!pendingAttachment)return;
+  var sel=document.getElementById("model-select");
+  var model=sel.value;
+  var isOpus=model==="claude-opus-4-7";
+  var profile=getUserProfile();
+  if(isOpus&&!opusAuthorized){
+    if(profile.role==="admin"){opusAuthorized=true;opusMsgsLeft=999;}
+    else{pendingSendAfterOpus=true;showOpusModal();return;}
+  }
+  if(isOpus&&opusMsgsLeft<=0&&profile.role!=="admin"){opusAuthorized=false;document.getElementById("opus-badge").style.display="none";pendingSendAfterOpus=true;addSysMsg("Opus authorization expired.");showOpusModal();return;}
+  input.value="";input.style.height="auto";
+  if(text){
+    if(profile.exempt!=="ALL"){
+      var scan=scanMessage(text);
+      for(var wi=0;wi<scan.warnOnly.length;wi++){var w=scan.warnOnly[wi];if(profile.exempt.indexOf(w.type)>-1)continue;if(w.type==="HOMEWORK")addWarningMsg(w.message);else addInfoMsg(w.message);}
+      for(var fi=0;fi<scan.flags.length;fi++){var f=scan.flags[fi];if(profile.exempt.indexOf(f.type)>-1)continue;if(profile.softFlag&&profile.softFlag.indexOf(f.type)>-1){logFlagToSheet(f.type,f.severity,text);continue;}if(f.warning)addWarningMsg(f.warning);logFlagToSheet(f.type,f.severity,text);}
+    }
+  }
+  var contextPrefix="";
+  var githubUrls=extractGithubUrls(text);
+  if(githubUrls.length>0){
+    addSysMsg("Fetching "+githubUrls.length+" GitHub file(s)...");
+    for(var gi=0;gi<githubUrls.length;gi++){var r=await fetchGithubContent(githubUrls[gi]);if(r){contextPrefix+="\n\n[File from GitHub: "+r.url+"]\n```"+r.ext+"\n"+r.content+"\n```\n";addSysMsg("Loaded: "+r.url.split("/").pop());}else addSysMsg("Could not fetch: "+githubUrls[gi]);}
+  }
+  var fullText=contextPrefix?contextPrefix+"\n"+text:text;
+  addUserMsg(text,pendingAttachment);
+  var content;
+  if(pendingAttachment){var att=pendingAttachment;var fb=att.type==="image"?{type:"image",source:{type:"base64",media_type:att.mediaType,data:att.data}}:{type:"document",source:{type:"base64",media_type:att.mediaType,data:att.data}};content=[fb,{type:"text",text:fullText||"What is this?"}];clearAttachment();}
+  else{content=fullText;}
+  conversationHistory.push({role:"user",content:content});
+  msgCount++;
+  if(isOpus&&profile.role!=="admin"){opusMsgsLeft--;document.getElementById("opus-badge").textContent="Opus: "+opusMsgsLeft+" left";}
+  updateCounter();updateTokenEst();
+  await streamReply();
+}
+
+function addUserMsg(text,attachment){
+  var d=document.createElement("div");d.className="msg user";
+  var inner="<div class=\"msg-label\">You</div><div class=\"msg-bubble\">";
+  if(attachment&&attachment.type==="image")inner+="<img src=\"data:"+attachment.mediaType+";base64,"+attachment.data+"\" style=\"max-width:200px;display:block;margin-bottom:6px;border-radius:8px\">";
+  if(attachment&&attachment.type==="document")inner+="<div style=\"font-size:11px;color:rgba(255,255,255,.7);margin-bottom:4px\">[PDF] "+attachment.name+"</div>";
+  inner+=esc(text||"")+"</div>";
+  d.innerHTML=inner;document.getElementById("messages").appendChild(d);scrollMsgs();
+}
+function addAssistantMsg(text){
+  var d=document.createElement("div");d.className="msg assistant";
+  d.innerHTML="<div class=\"msg-label\">Assistant</div><div class=\"msg-bubble\">"+renderMd(text)+"</div>";
+  document.getElementById("messages").appendChild(d);d.querySelectorAll("pre code").forEach(function(b){hljs.highlightElement(b);});scrollMsgs();return d;
+}
+function addSysMsg(text){var d=document.createElement("div");d.className="msg system-msg";d.innerHTML="<div class=\"msg-bubble\">"+esc(text)+"</div>";document.getElementById("messages").appendChild(d);scrollMsgs();}
+function addWarningMsg(text){var d=document.createElement("div");d.className="msg warn-msg";d.innerHTML="<div class=\"msg-bubble\">"+esc(text)+"</div>";document.getElementById("messages").appendChild(d);scrollMsgs();}
+function addInfoMsg(text){var d=document.createElement("div");d.className="msg info-msg";d.innerHTML="<div class=\"msg-bubble\">"+esc(text)+"</div>";document.getElementById("messages").appendChild(d);scrollMsgs();}
+function addTyping(){var d=document.createElement("div");d.className="msg assistant";d.id="typing-msg";d.innerHTML="<div class=\"msg-label\">Assistant</div><div class=\"msg-bubble\"><div class=\"typing-indicator\"><div class=\"typing-dot\"></div><div class=\"typing-dot\"></div><div class=\"typing-dot\"></div></div></div>";document.getElementById("messages").appendChild(d);scrollMsgs();}
+
+async function streamReply() {
+  isStreaming=true;document.getElementById("send-btn").disabled=true;addTyping();
+  var sel=document.getElementById("model-select");var model=sel.value;var thinking=sel.options[sel.selectedIndex].dataset.thinking==="true";
+  try{
+    var bodyObj={model:model,max_tokens:thinking?16000:4096,stream:true,system:getSystemPrompt(),messages:conversationHistory};
+    if(thinking)bodyObj.thinking={type:"enabled",budget_tokens:10000};
+    var res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify(bodyObj)});
+    if(!res.ok){var ed=await res.json().catch(function(){return{};});var emsg=ed.error?ed.error.message:"API error "+res.status;if(res.status===401)emsg="Invalid API key.";else if(res.status===429)emsg="Rate limit hit.";else if(res.status===413||emsg.indexOf("context")>-1)emsg="Conversation too long. Clear chat and start fresh.";throw new Error(emsg);}
+    var tm=document.getElementById("typing-msg");if(tm)tm.remove();
+    var msgs=document.getElementById("messages");
+    var msgDiv=document.createElement("div");msgDiv.className="msg assistant";
+    var bubble=document.createElement("div");bubble.className="msg-bubble";bubble.style.whiteSpace="pre-wrap";
+    msgDiv.innerHTML="<div class=\"msg-label\">Assistant</div>";msgDiv.appendChild(bubble);msgs.appendChild(msgDiv);
+    var reader=res.body.getReader(),decoder=new TextDecoder();
+    var fullText="",buffer="",inputTokens=0,outputTokens=0;
+    while(true){var chunk=await reader.read();if(chunk.done)break;buffer+=decoder.decode(chunk.value,{stream:true});var lines=buffer.split("\n");buffer=lines.pop();for(var li=0;li<lines.length;li++){var line=lines[li];if(!line.startsWith("data: "))continue;var ds=line.slice(6).trim();if(ds==="[DONE]")continue;try{var p=JSON.parse(ds);if(p.type==="message_start")inputTokens=p.message&&p.message.usage?p.message.usage.input_tokens:0;if(p.type==="message_delta")outputTokens=p.usage?p.usage.output_tokens:0;if(p.type==="content_block_delta"&&p.delta&&p.delta.type==="text_delta"){fullText+=p.delta.text;bubble.textContent=fullText;scrollMsgs();}}catch(pe){}}}
+    bubble.style.whiteSpace="";bubble.innerHTML=renderMd(fullText);
+    msgDiv.querySelectorAll("pre code").forEach(function(b){hljs.highlightElement(b);});
+    var msgCost=calcCost(model,inputTokens,outputTokens);sessionTotalCost+=msgCost;
+    var costEl=document.createElement("div");costEl.className="msg-cost";
+    costEl.innerHTML="<span style=\"color:var(--muted)\">this msg: "+fmtCost(msgCost)+" ("+inputTokens+" in / "+outputTokens+" out)</span><span style=\"color:var(--muted2)\">session: "+fmtCost(sessionTotalCost)+"</span>";
+    msgDiv.appendChild(costEl);scrollMsgs();conversationHistory.push({role:"assistant",content:fullText});updateTokenEst();
+    var profile2=getUserProfile();
+    if(model==="claude-opus-4-7"&&profile2.role!=="admin"&&opusMsgsLeft<=1&&opusMsgsLeft>0)addSysMsg(opusMsgsLeft+" Opus message remaining.");
+  }catch(err){var tm2=document.getElementById("typing-msg");if(tm2)tm2.remove();var d=document.createElement("div");d.className="msg assistant";d.innerHTML="<div class=\"msg-label\">Error</div><div class=\"msg-bubble\" style=\"border-color:rgba(248,113,113,.3);color:var(--red);\">"+esc(err.message)+"</div>";document.getElementById("messages").appendChild(d);scrollMsgs();}
+  finally{isStreaming=false;if(MAX_MSGS<=0||msgCount<MAX_MSGS)document.getElementById("send-btn").disabled=false;document.getElementById("user-input").focus();}
+}
+
+/* ── Export / Clear ── */
+function exportChat(){if(!conversationHistory.length){alert("Nothing to export.");return;}var lines=["# Code Assistant Export","User: "+username,"Date: "+new Date().toLocaleString(),""];conversationHistory.forEach(function(m){lines.push("## "+(m.role==="user"?"You":"Assistant"));lines.push(typeof m.content==="string"?m.content:"[attachment]");lines.push("");});var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([lines.join("\n")],{type:"text/markdown"}));a.download="chat-"+Date.now()+".md";a.click();}
+function clearChat(){if(!confirm("Clear conversation?"))return;conversationHistory=[];msgCount=0;sessionTotalCost=0;document.getElementById("messages").innerHTML="";document.getElementById("rate-banner").style.display="none";document.getElementById("send-btn").disabled=false;document.getElementById("user-input").disabled=false;clearAttachment();updateCounter();updateTokenEst();addSysMsg("Conversation cleared.");addAssistantMsg("Fresh start, "+username+"! What are we working on?");}
+
+/* ── Chatroom ── */
+var chatroomOpen=false, currentRoom="global", chatroomPollInterval=null, chatroomPolling=false;
+var crLastMsgId="", crAtBottom=true;
+
+function openChatroom() {
+  chatroomOpen=true;
+  document.getElementById("chatroom-panel").style.display="flex";
+  setupChatroomTabs();
+  loadChatroomMessages();
+  chatroomPollInterval=setInterval(function(){if(!chatroomPolling)loadChatroomMessages();},4000);
+  var cm=document.getElementById("chatroom-messages");
+  cm.addEventListener("scroll",function(){crAtBottom=cm.scrollTop+cm.clientHeight>=cm.scrollHeight-20;});
+}
+
+function closeChatroom() {
+  chatroomOpen=false;
+  document.getElementById("chatroom-panel").style.display="none";
+  clearInterval(chatroomPollInterval);
+}
+
+function setupChatroomTabs() {
+  var tabs=document.getElementById("cr-tabs");tabs.innerHTML="";
+  var profile=getUserProfile();
+  var rooms=[{id:"global",label:"Global"}];
+  if(profile.role==="admin"){
+    rooms.push({id:"group_jsi",label:"Group Chat"});
+    rooms.push({id:"dm_sam",label:"Sam DM"});
+    rooms.push({id:"dm_isaac",label:"Isaac DM"});
+  } else if(profile.role==="sam"){
+    rooms.push({id:"group_jsi",label:"Group Chat"});
+    rooms.push({id:"dm_sam",label:"Jacob DM"});
+    rooms.push({id:"dm_sam_isaac",label:"Isaac DM"});
+  } else if(profile.role==="isaac"){
+    rooms.push({id:"group_jsi",label:"Group Chat"});
+    rooms.push({id:"dm_isaac",label:"Jacob DM"});
+    rooms.push({id:"dm_sam_isaac",label:"Sam DM"});
+  }
+  for(var i=0;i<rooms.length;i++){
+    (function(room){
+      var btn=document.createElement("button");
+      btn.className="cr-tab"+(currentRoom===room.id?" active":"");
+      btn.textContent=room.label;
+      btn.onclick=function(){switchRoom(room.id);};
+      tabs.appendChild(btn);
+    })(rooms[i]);
+  }
+}
+
+function switchRoom(roomId) {
+  currentRoom=roomId;
+  var allTabs=document.getElementById("cr-tabs").querySelectorAll(".cr-tab");
+  var titles={
+    "global":"Global Chat",
+    "group_jsi":"Group Chat - Jacob, Sam & Isaac",
+    "dm_sam":"Sam - Private DM",
+    "dm_isaac":"Isaac - Private DM",
+    "dm_jacob":"Jacob - Private DM",
+    "dm_sam_isaac":"Sam & Isaac - Private"
+  };
+  var labels={
+    "global":"Global","group_jsi":"Group Chat",
+    "dm_sam":getUserProfile().role==="sam"?"Jacob DM":"Sam DM",
+    "dm_isaac":getUserProfile().role==="isaac"?"Jacob DM":"Isaac DM",
+    "dm_sam_isaac":getUserProfile().role==="sam"?"Isaac DM":"Sam DM"
+  };
+  for(var i=0;i<allTabs.length;i++){allTabs[i].classList.toggle("active",allTabs[i].textContent===(labels[roomId]||roomId));}
+  document.getElementById("cr-room-title").textContent=titles[roomId]||roomId;
+  document.getElementById("chatroom-messages").innerHTML="";
+  crLastMsgId="";
+  loadChatroomMessages();
+}
+
+async function loadChatroomMessages() {
+  chatroomPolling=true;
+  try{
+    var res=await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"getChatMessages",clientSecret:CLIENT_SECRET,username:username,roomId:currentRoom})});
+    var data=await res.json();
+    if(!data.ok)return;
+    renderChatroomMessages(data.messages||[]);
+  }catch(e){}
+  finally{chatroomPolling=false;}
+}
+
+function renderChatroomMessages(messages) {
+  var container=document.getElementById("chatroom-messages");
+  var lastId=messages.length>0?messages[messages.length-1].id:"";
+  if(lastId===crLastMsgId)return;
+  crLastMsgId=lastId;
+  container.innerHTML="";
+  if(messages.length===0){container.innerHTML="<div class=\"cr-divider\">No messages yet. Say hi!</div>";return;}
+  var imgRegex=/(https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp|bmp)(\?[^\s]*)?)/i;
+  for(var i=0;i<messages.length;i++){
+    var msg=messages[i];
+    var isMine=(msg.username||"").toLowerCase()===username.toLowerCase();
+    var d=document.createElement("div");
+    d.className="cr-msg"+(isMine?" mine":"");
+    var color=getUsernameColor(msg.username);
+    var timeStr=formatChatTime(msg.timestamp);
+    var msgText=msg.message||"";
+    var contentHtml;
+
+    // Code file block
+    var codeData=decodeCodeMsg(msgText);
+    if(codeData){
+      var uid="cr-code-"+i;
+      contentHtml=(codeData.caption?"<div class=\"cr-msg-text\" style=\"margin-bottom:6px;\">"+esc(codeData.caption)+"</div>":"")
+        +"<div class=\"cr-code-block\">"
+        +"<div class=\"cr-code-header\"><span class=\"cr-code-filename\">"+esc(codeData.filename)+(codeData.filesize?" &middot; "+esc(codeData.filesize):"")+"</span>"
+        +"<button class=\"cr-code-copy\" onclick=\"crCopyCode('"+uid+"',this)\">Copy</button></div>"
+        +"<div class=\"cr-code-body\" id=\""+uid+"\">"+esc(codeData.content)+"<div class=\"cr-code-fade\" id=\""+uid+"-fade\"></div></div>"
+        +"<button class=\"cr-code-expand\" id=\""+uid+"-btn\" onclick=\"crExpandCode('"+uid+"')\">View full file</button>"
+        +"</div>";
+    }
+    // Inline code block (```code ... ```)
+    else if(parseInlineCode(msgText)){
+      var ic=parseInlineCode(msgText);
+      var uid2="cr-code-"+i;
+      contentHtml=(ic.caption?"<div class=\"cr-msg-text\" style=\"margin-bottom:6px;\">"+esc(ic.caption)+"</div>":"")
+        +"<div class=\"cr-code-block\">"
+        +"<div class=\"cr-code-header\"><span class=\"cr-code-filename\">snippet</span>"
+        +"<button class=\"cr-code-copy\" onclick=\"crCopyCode('"+uid2+"',this)\">Copy</button></div>"
+        +"<div class=\"cr-code-body\" id=\""+uid2+"\">"+esc(ic.content)+"<div class=\"cr-code-fade\" id=\""+uid2+"-fade\"></div></div>"
+        +"<button class=\"cr-code-expand\" id=\""+uid2+"-btn\" onclick=\"crExpandCode('"+uid2+"')\">View full file</button>"
+        +"</div>"
+        +(ic.after?"<div class=\"cr-msg-text\" style=\"margin-top:6px;\">"+esc(ic.after)+"</div>":"");
+    }
+    // Image
+    else if(imgRegex.test(msgText)){
+      var imgMatch=msgText.match(imgRegex);
+      var imgUrl=imgMatch[0];
+      var caption=msgText.replace(imgUrl,"").trim();
+      contentHtml="<div class=\"cr-msg-text\" style=\"padding:6px;background:none;border:none;\">"+(caption?"<div style=\"margin-bottom:4px;font-size:12px;\">"+esc(caption)+"</div>":"")+"<img src=\""+esc(imgUrl)+"\" style=\"max-width:220px;max-height:220px;border-radius:10px;display:block;object-fit:cover;border:1px solid var(--border)\" onerror=\"this.style.display='none'\"></div>";
+    }
+    // Plain text
+    else{
+      contentHtml="<div class=\"cr-msg-text\">"+esc(msgText)+"</div>";
+    }
+
+    d.innerHTML="<div class=\"cr-msg-header\"><span class=\"cr-msg-name\" style=\"color:"+color+"\">"+esc(msg.username)+"</span><span class=\"cr-msg-time\">"+esc(timeStr)+"</span></div>"+contentHtml;
+    container.appendChild(d);
+  }
+  document.getElementById("cr-msg-count").textContent=messages.length+" msg"+(messages.length===1?"":"s");
+  if(crAtBottom){container.scrollTop=container.scrollHeight;}
+  crAtBottom=true;
+}
+
+function crCopyCode(uid,btn){
+  var el=document.getElementById(uid);
+  if(!el)return;
+  // Get text without the fade div
+  var text=el.childNodes[0]?el.childNodes[0].textContent:el.textContent;
+  navigator.clipboard.writeText(text).then(function(){btn.textContent="Copied!";btn.classList.add("copied");setTimeout(function(){btn.textContent="Copy";btn.classList.remove("copied");},2000);});
+}
+
+function crExpandCode(uid){
+  var body=document.getElementById(uid);
+  var fade=document.getElementById(uid+"-fade");
+  var btn=document.getElementById(uid+"-btn");
+  if(!body)return;
+  var expanded=body.classList.toggle("expanded");
+  if(fade)fade.style.display=expanded?"none":"block";
+  if(btn)btn.textContent=expanded?"Collapse":"View full file";
+}
+
+function formatChatTime(ts) {
+  var d=new Date(ts);var now=new Date();
+  var diff=Math.floor((now-d)/60000);
+  if(diff<1)return "just now";
+  if(diff<60)return diff+"m ago";
+  if(diff<1440){var h=Math.floor(diff/60);return h+"h ago";}
+  return d.toLocaleDateString()+" "+d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+
+var pendingCrFile = null; // {name, size, lang, content}
+
+var CODE_TRIGGERS = ["<!doctype","<"+"?php","#!/","function ","const ","var ","let ","def ","class ","import ","#include","<html","module.exports","export default","export const","export function"];
+var LANG_MAP = {js:"javascript",ts:"typescript",py:"python",html:"html",css:"css",json:"json",gs:"javascript",java:"java",cpp:"cpp",c:"c",cs:"csharp",php:"php",rb:"ruby",go:"go",rs:"rust",sh:"bash",sql:"sql",md:"markdown",xml:"xml",yaml:"yaml",yml:"yaml"};
+
+function detectLang(filename) {
+  var ext=(filename||"").split(".").pop().toLowerCase();
+  return LANG_MAP[ext]||"plaintext";
+}
+
+function isCodeContent(text) {
+  var lower=text.toLowerCase();
+  for(var i=0;i<CODE_TRIGGERS.length;i++){if(lower.indexOf(CODE_TRIGGERS[i])>-1)return true;}
+  return false;
+}
+
+function loadChatroomFile(input) {
+  var file=input.files[0];if(!file)return;
+  input.value="";
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var content=e.target.result;
+    var sizeKb=Math.round(file.size/1024);
+    pendingCrFile={name:file.name,size:sizeKb+"KB",lang:detectLang(file.name),content:content};
+    var prev=document.getElementById("cr-file-preview");
+    document.getElementById("cr-file-name").textContent=file.name;
+    document.getElementById("cr-file-size").textContent=sizeKb+"KB";
+    prev.style.display="flex";
+    document.getElementById("chatroom-input").focus();
+  };
+  reader.readAsText(file);
+}
+
+function cancelCrFile(){pendingCrFile=null;document.getElementById("cr-file-preview").style.display="none";}
+
+function insertCodeDelimiter() {
+  var ta=document.getElementById("chatroom-input");
+  var val=ta.value;
+  var insert="```code\n\n```";
+  var pos=ta.selectionStart||val.length;
+  ta.value=val.substring(0,pos)+insert+val.substring(pos);
+  // put cursor inside the block
+  var newPos=pos+8;
+  ta.setSelectionRange(newPos,newPos);
+  ta.focus();
+  ta.style.height="auto";ta.style.height=Math.min(ta.scrollHeight,80)+"px";
+}
+
+function encodeCodeMsg(caption,lang,filename,filesize,content) {
+  // Format: @@CODE@@lang@@filename@@filesize@@content@@CAPTION@@caption
+  return "@@CODE@@"+lang+"@@"+filename+"@@"+filesize+"@@"+content+"@@CAPTION@@"+caption;
+}
+
+function decodeCodeMsg(msg) {
+  if(msg.indexOf("@@CODE@@")!==0)return null;
+  var rest=msg.slice(8);
+  var capSplit=rest.indexOf("@@CAPTION@@");
+  var caption=capSplit>-1?rest.slice(capSplit+11):"";
+  var parts=rest.slice(0,capSplit>-1?capSplit:rest.length).split("@@");
+  if(parts.length<4)return null;
+  return{lang:parts[0],filename:parts[1],filesize:parts[2],content:parts.slice(3).join("@@"),caption:caption};
+}
+
+function parseInlineCode(text) {
+  // Match ```lang\ncode\n``` with actual newlines (textarea preserves them)
+  var match=text.match(/^([\s\S]*?)```(code|javascript|python|html|css|js|py|ts|java|cpp|c|go|rust|php|rb|sql|bash|sh|json|xml|yaml|md|gs)?\s*\n([\s\S]*?)```([\s\S]*)$/i);
+  if(!match)return null;
+  var caption=(match[1]||"").trim();
+  var lang=match[2]||"plaintext";
+  var content=(match[3]||"").trim();
+  var after=(match[4]||"").trim();
+  return{caption:caption,content:content,lang:lang,filename:"snippet",filesize:"",after:after};
+}
+
+
+var CLOUDINARY_CLOUD  = "dc5i2rg68";
+var CLOUDINARY_PRESET = "claude";
+var pendingCrImageUrl = "";
+
+async function uploadChatroomImage(input) {
+  var file = input.files[0]; if(!file) return;
+  var preview = document.getElementById("cr-img-preview");
+  var previewText = document.getElementById("cr-img-preview-text");
+  preview.style.display = "flex";
+  previewText.textContent = "Uploading...";
+  input.value = "";
+  var formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_PRESET);
+  try {
+    var res = await fetch("https://api.cloudinary.com/v1_1/"+CLOUDINARY_CLOUD+"/image/upload", { method:"POST", body:formData });
+    var data = await res.json();
+    if(data.secure_url) {
+      pendingCrImageUrl = data.secure_url;
+      previewText.textContent = "Image ready - send now or add a caption first";
+      document.getElementById("chatroom-input").focus();
+    } else {
+      previewText.textContent = "Upload failed. Try again.";
+      setTimeout(function(){preview.style.display="none";},2000);
+    }
+  } catch(e) {
+    previewText.textContent = "Upload failed. Check connection.";
+    setTimeout(function(){preview.style.display="none";},2000);
+  }
+}
+
+function cancelCrImage() {
+  pendingCrImageUrl = "";
+  document.getElementById("cr-img-preview").style.display = "none";
+}
+
+async function sendChatroomMessage() {
+  var input=document.getElementById("chatroom-input");
+  var text=input.value.trim();
+  if(!text&&!pendingCrImageUrl&&!pendingCrFile)return;
+  var fullMsg;
+  if(pendingCrFile){
+    fullMsg=encodeCodeMsg(text,pendingCrFile.lang,pendingCrFile.name,pendingCrFile.size,pendingCrFile.content);
+    cancelCrFile();
+  } else if(pendingCrImageUrl){
+    fullMsg=pendingCrImageUrl?(text?text+" "+pendingCrImageUrl:pendingCrImageUrl):text;
+    cancelCrImage();
+  } else {
+    fullMsg=text;
+  }
+  input.value="";input.style.height="auto";
+  try{
+    var res=await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"sendChatMessage",clientSecret:CLIENT_SECRET,username:username,roomId:currentRoom,message:fullMsg})});
+    var data=await res.json();
+    if(data.ok){crLastMsgId="";loadChatroomMessages();}
+  }catch(e){addSysMsg("Failed to send message.");}
+}
+
+function manualRefreshChatroom(){crLastMsgId="";loadChatroomMessages();}
+
+/* ── GitHub Search ── */
+var gh_page=1, gh_total=0, gh_perPage=30, gh_faLoaded=false;
+
+function openGithub(){
+  document.getElementById("github-panel").style.display="flex";
+  ghLoadFa();
+  var inp=document.getElementById("gh-repoSearch");
+  inp.onkeypress=function(e){if(e.key==="Enter")ghSearchRepos();};
+  ["gh-minStars","gh-minForks"].forEach(function(id){
+    document.getElementById(id).oninput=function(){if(document.getElementById("gh-repoSearch").value.trim())ghSearchRepos();};
+  });
+  document.querySelectorAll(".gh-lang,#gh-showStars,#gh-showForks,#gh-showWatchers,#gh-showIssues").forEach(function(el){
+    el.onchange=function(){if(document.getElementById("gh-repoSearch").value.trim())ghSearchRepos();else ghFilterResults();};
+  });
+  document.querySelectorAll("input[name='gh-searchType']").forEach(function(el){
+    el.onchange=function(){if(document.getElementById("gh-repoSearch").value.trim())ghSearchRepos();};
+  });
+}
+function closeGithub(){document.getElementById("github-panel").style.display="none";}
+
+function ghLoadFa(){
+  if(gh_faLoaded||document.getElementById("gh-fa-css"))return;
+  var link=document.createElement("link");link.id="gh-fa-css";link.rel="stylesheet";
+  link.href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css";
+  document.head.appendChild(link);gh_faLoaded=true;
+}
+
+function ghBuildQuery(){
+  var q=document.getElementById("gh-repoSearch").value.trim();
+  if(q.indexOf("#")>-1){q=q.replace(/#(\S+)/g,"topic:$1");}
+  var stars=parseInt(document.getElementById("gh-minStars").value)||0;
+  var forks=parseInt(document.getElementById("gh-minForks").value)||0;
+  if(stars>0)q+=" stars:>="+stars;
+  if(forks>0)q+=" forks:>="+forks;
+  var langs=[];
+  document.querySelectorAll(".gh-lang:checked").forEach(function(el){langs.push("language:"+el.value);});
+  if(langs.length)q+=" "+langs.join(" ");
+  return q;
+}
+
+function ghSearchRepos(page){
+  page=page||1;
+  var q=document.getElementById("gh-repoSearch").value.trim();
+  if(!q){document.getElementById("gh-results").innerHTML="<div class='gh-empty'>Enter a search term above.</div>";return;}
+  var type=document.querySelector("input[name='gh-searchType']:checked").value;
+  var results=document.getElementById("gh-results");
+  results.innerHTML="<div class='gh-empty'>Searching...</div>";
+  gh_page=page;
+  var url="https://api.github.com/search/"+type+"?q="+encodeURIComponent(ghBuildQuery())+"&page="+page+"&per_page="+gh_perPage;
+  fetch(url).then(function(r){
+    var remaining=r.headers.get("X-RateLimit-Remaining");
+    if(remaining!==null)document.getElementById("gh-rate-label").textContent="API: "+remaining+" req left";
+    return r.json();
+  }).then(function(data){
+    if(!data.items||!data.items.length){results.innerHTML="<div class='gh-empty'>No results found.</div>";gh_total=0;ghRenderPagination();return;}
+    gh_total=data.total_count;
+    ghRenderResults(data.items,type);
+    ghRenderPagination();
+  }).catch(function(){results.innerHTML="<div class='gh-empty' style='color:var(--red)'>API error. GitHub rate limit may be reached.</div>";});
+}
+
+function ghRenderResults(items,type){
+  var results=document.getElementById("gh-results");
+  results.innerHTML="";
+  var info=document.createElement("div");
+  info.className="gh-results-info";
+  var start=(gh_page-1)*gh_perPage+1;
+  var end=Math.min(gh_page*gh_perPage,gh_total);
+  info.textContent="Showing "+start+"-"+end+" of "+gh_total.toLocaleString()+" results";
+  results.appendChild(info);
+  items.forEach(function(item,idx){
+    var d=document.createElement("div");
+    if(type==="repositories"){
+      d.className="gh-repo";
+      var statsHtml="<div class='gh-repo-stats'>"
+        +"<span class='gh-star-stat'><i class='fas fa-star' style='color:#f59e0b'></i> "+item.stargazers_count.toLocaleString()+"</span>"
+        +"<span class='gh-fork-stat'><i class='fas fa-code-branch'></i> "+item.forks_count.toLocaleString()+"</span>"
+        +"<span class='gh-watch-stat'><i class='fas fa-eye'></i> "+item.watchers_count.toLocaleString()+"</span>"
+        +"<span class='gh-issue-stat'><i class='fas fa-circle-dot'></i> "+item.open_issues_count.toLocaleString()+"</span>"
+        +(item.language?"<span style='color:#21d498'><i class='fas fa-circle' style='font-size:9px'></i> "+esc(item.language)+"</span>":"")
+        +"</div>";
+      d.innerHTML="<div style='display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:5px;'>"
+        +"<button class='gh-repo-name' onclick='ghToggleFiles(this,\""+esc(item.full_name)+"\")'>"+esc(item.full_name)+"</button>"
+        +"<a href='https://github.com/"+esc(item.full_name)+"' target='_blank' style='font-size:13px;color:var(--muted);text-decoration:none;' title='Open on GitHub'><i class='fab fa-github'></i></a>"
+        +"<button class='gh-dl-btn' onclick='ghDownloadZip(\""+esc(item.full_name)+"\")'><i class='fas fa-download'></i> ZIP</button>"
+        +"</div>"
+        +statsHtml
+        +"<div class='gh-repo-desc'>"+ghParseDesc(item.description)+"</div>"
+        +(item.homepage?"<div style='font-size:11px;color:var(--muted);margin-top:4px;'><i class='fas fa-link' style='color:#21d498'></i> <a href='"+esc(item.homepage)+"' target='_blank' style='color:#21d498;text-decoration:none;'>"+esc(item.homepage)+"</a></div>":"")
+        +"<div class='gh-files' id='gh-files-"+idx+"'></div>";
+    } else {
+      d.className="gh-user";
+      d.innerHTML="<div style='display:flex;align-items:center;gap:10px;'>"
+        +"<img src='"+esc(item.avatar_url)+"' style='width:36px;height:36px;border-radius:50%;border:2px solid var(--border);'>"
+        +"<div style='flex:1;'>"
+        +"<button class='gh-repo-name' onclick='ghToggleUser(this,\""+esc(item.login)+"\","+idx+")'>"+esc(item.login)+"</button>"
+        +"<a href='https://github.com/"+esc(item.login)+"' target='_blank' style='margin-left:8px;color:var(--muted);font-size:13px;'><i class='fab fa-github'></i></a>"
+        +"</div></div>"
+        +"<div class='gh-user-details' id='gh-user-"+idx+"'></div>";
+    }
+    results.appendChild(d);
+  });
+  ghFilterResults();
+}
+
+function ghToggleFiles(btn,fullName){
+  var filesDiv=btn.closest(".gh-repo").querySelector(".gh-files");
+  if(filesDiv.style.display==="flex"){filesDiv.style.display="none";return;}
+  if(filesDiv.innerHTML){filesDiv.style.display="flex";return;}
+  filesDiv.style.display="flex";
+  filesDiv.innerHTML="<div style='color:var(--muted);font-size:12px;padding:6px;'>Loading files...</div>";
+  fetch("https://api.github.com/repos/"+fullName+"/contents").then(function(r){return r.json();}).then(function(files){
+    filesDiv.innerHTML="";
+    if(!files||files.message){filesDiv.innerHTML="<div style='color:var(--red);font-size:12px;padding:6px;'>Error loading files.</div>";return;}
+    files.forEach(function(f){
+      var fd=document.createElement("div");fd.className="gh-file";
+      var icon=f.type==="dir"?"fa-folder":"fa-file-code";
+      fd.innerHTML="<span style='display:flex;align-items:center;gap:7px;'><i class='fas "+icon+"' style='color:"+(f.type==="dir"?"#f59e0b":"var(--accent2)")+"'></i>"+esc(f.name)+"</span>"
+        +"<div class='gh-file-icons'>"
+        +(f.html_url?"<a href='"+esc(f.html_url)+"' target='_blank' title='View on GitHub'><i class='fab fa-github'></i></a>":"")
+        +(f.download_url?"<a onclick='ghDownloadFile(\""+esc(f.download_url)+"\",\""+esc(f.name)+"\")' title='Download'><i class='fas fa-download'></i></a>":"")
+        +"</div>";
+      filesDiv.appendChild(fd);
+    });
+  }).catch(function(){filesDiv.innerHTML="<div style='color:var(--red);font-size:12px;padding:6px;'>Failed to load.</div>";});
+}
+
+function ghToggleUser(btn,login,idx){
+  var div=document.getElementById("gh-user-"+idx);
+  if(div.style.display==="block"){div.style.display="none";return;}
+  if(div.innerHTML){div.style.display="block";return;}
+  div.style.display="block";div.innerHTML="Loading...";
+  fetch("https://api.github.com/users/"+login).then(function(r){return r.json();}).then(function(u){
+    div.innerHTML="<img src='"+esc(u.avatar_url)+"' class='gh-avatar'>"
+      +"<div style='overflow:hidden;'>"
+      +"<div style='font-weight:700;color:#21d498;font-size:13px;'>"+esc(u.name||u.login)+"</div>"
+      +(u.bio?"<div style='color:var(--muted);font-size:12px;margin:3px 0;'>\""+esc(u.bio)+"\"</div>":"")
+      +(u.location?"<div style='font-size:11px;color:var(--muted2);'><i class='fas fa-location-dot'></i> "+esc(u.location)+"</div>":"")
+      +(u.company?"<div style='font-size:11px;color:var(--muted2);'><i class='fas fa-building'></i> "+esc(u.company)+"</div>":"")
+      +"</div>"
+      +"<div class='gh-user-stats'>"
+      +"<span><i class='fas fa-book'></i> "+u.public_repos+" repos</span>"
+      +"<span><i class='fas fa-users'></i> "+u.followers+" followers</span>"
+      +"<span><i class='fas fa-user-plus'></i> "+u.following+" following</span>"
+      +"<span><i class='fas fa-calendar'></i> Joined "+new Date(u.created_at).toLocaleDateString()+"</span>"
+      +"</div>";
+  }).catch(function(){div.innerHTML="<div style='color:var(--red);font-size:12px;'>Failed to load user.</div>";});
+}
+
+function ghDownloadFile(url,filename){
+  fetch(url).then(function(r){return r.text();}).then(function(data){
+    var blob=new Blob([data],{type:"text/plain"});
+    var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);
+  }).catch(function(){alert("Download failed.");});
+}
+
+function ghDownloadZip(fullName){
+  fetch("https://api.github.com/repos/"+fullName).then(function(r){return r.json();}).then(function(repo){
+    var url="https://github.com/"+fullName+"/archive/refs/heads/"+repo.default_branch+".zip";
+    var a=document.createElement("a");a.href=url;a.target="_blank";a.click();
+  }).catch(function(){alert("Could not get repo info.");});
+}
+
+function ghParseDesc(desc){
+  if(!desc)return "<span style='color:var(--muted2)'>No description</span>";
+  return esc(desc).replace(/(https?:\/\/[^\s]+)/g,"<a href='$1' target='_blank' style='color:#21d498;'>$1</a>");
+}
+
+function ghFilterResults(){
+  var showStars=document.getElementById("gh-showStars").checked;
+  var showForks=document.getElementById("gh-showForks").checked;
+  var showWatch=document.getElementById("gh-showWatchers").checked;
+  var showIssues=document.getElementById("gh-showIssues").checked;
+  document.querySelectorAll(".gh-star-stat").forEach(function(el){el.style.display=showStars?"":"none";});
+  document.querySelectorAll(".gh-fork-stat").forEach(function(el){el.style.display=showForks?"":"none";});
+  document.querySelectorAll(".gh-watch-stat").forEach(function(el){el.style.display=showWatch?"":"none";});
+  document.querySelectorAll(".gh-issue-stat").forEach(function(el){el.style.display=showIssues?"":"none";});
+}
+
+function ghRenderPagination(){
+  var results=document.getElementById("gh-results");
+  var old=results.querySelector(".gh-pagination");if(old)old.remove();
+  if(gh_total<=gh_perPage)return;
+  var totalPages=Math.min(Math.ceil(gh_total/gh_perPage),34);
+  var div=document.createElement("div");div.className="gh-pagination";
+  var prev=document.createElement("button");prev.className="gh-page-btn";prev.textContent="Previous";prev.disabled=gh_page===1;
+  prev.onclick=function(){ghSearchRepos(gh_page-1);};
+  var info=document.createElement("span");info.textContent="Page "+gh_page+" of "+totalPages;
+  var next=document.createElement("button");next.className="gh-page-btn";next.textContent="Next";next.disabled=gh_page>=totalPages;
+  next.onclick=function(){ghSearchRepos(gh_page+1);};
+  div.appendChild(prev);div.appendChild(info);div.appendChild(next);
+  results.appendChild(div);
+}
+
+/* ── Forums ── */
+var currentForumPost = null;
+var FORUM_LANG_COLORS = {javascript:"#f59e0b",python:"#3b82f6",html:"#f97316",css:"#8b5cf6",gs:"#34d399",java:"#ef4444",cpp:"#6366f1",go:"#22d3ee",rust:"#f97316","default":"#5a7394"};
+
+function openForums() {
+  document.getElementById("forums-panel").style.display="flex";
+  showForumView("list");
+  loadForumPosts();
+}
+function closeForums() { document.getElementById("forums-panel").style.display="none"; }
+
+function showForumView(view) {
+  ["list","detail","new"].forEach(function(v){
+    var el=document.getElementById("forums-"+v+"-view");
+    if(el) el.style.display=(v===view)?"flex":"none";
+  });
+  document.getElementById("forums-title").textContent=view==="list"?"Script Forums":view==="new"?"New Post":"Post";
+  document.getElementById("forums-new-btn").style.display=view==="list"?"block":"none";
+  document.getElementById("forums-back-btn").style.display=view!=="list"?"block":"none";
+}
+
+async function loadForumPosts() {
+  var list=document.getElementById("forums-list-view");
+  list.innerHTML="<div class='cr-divider'>Loading...</div>";
+  try{
+    var res=await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"getForumPosts",clientSecret:CLIENT_SECRET,username:username})});
+    var data=await res.json();
+    if(!data.ok)throw new Error();
+    renderForumPosts(data.posts||[]);
+  }catch(e){list.innerHTML="<div class='cr-divider'>Failed to load posts.</div>";}
+}
+
+function renderForumPosts(posts) {
+  var list=document.getElementById("forums-list-view");
+  if(posts.length===0){list.innerHTML="<div class='cr-divider'>No scripts posted yet. Be the first!</div>";return;}
+  list.innerHTML="";
+  posts.forEach(function(post){
+    var card=document.createElement("div");
+    card.style.cssText="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:13px 14px;cursor:pointer;transition:border-color .15s;";
+    card.onmouseover=function(){card.style.borderColor="var(--accent)";};
+    card.onmouseout=function(){card.style.borderColor="var(--border)";};
+    card.onclick=function(){viewForumPost(post);};
+    var color=FORUM_LANG_COLORS[post.language]||FORUM_LANG_COLORS["default"];
+    var time=formatChatTime(post.timestamp);
+    var preview=(post.code||"").split("\n").slice(0,2).join(" ").substring(0,90);
+    card.innerHTML="<div style='display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap;'>"
+      +"<span style='font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;background:"+color+"22;color:"+color+";border:1px solid "+color+"44;'>"+esc(post.language||"code")+"</span>"
+      +"<span style='font-size:13px;font-weight:600;color:var(--text);flex:1;'>"+esc(post.title)+"</span>"
+      +"<span style='font-size:10px;color:var(--muted2);font-family:var(--mono);'>"+esc(time)+"</span></div>"
+      +"<div style='font-size:11.5px;color:var(--muted);margin-bottom:4px;'>by <strong style='color:"+getUsernameColor(post.username)+"'>"+esc(post.username)+"</strong>"+(post.description?" &mdash; "+esc(post.description):"")+"</div>"
+      +"<div style='font-size:11px;color:var(--muted2);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'>"+esc(preview)+"</div>";
+    list.appendChild(card);
+  });
+}
+
+function viewForumPost(post) {
+  currentForumPost=post;
+  showForumView("detail");
+  var detail=document.getElementById("forums-detail-view");
+  var color=FORUM_LANG_COLORS[post.language]||FORUM_LANG_COLORS["default"];
+  var time=formatChatTime(post.timestamp);
+  var isOwner=getUserProfile().role==="admin"||(post.username||"").toLowerCase()===username.toLowerCase();
+  var lines=(post.code||"").split("\n").length;
+  detail.innerHTML="<div style='display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-bottom:4px;'>"
+    +"<span style='font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;background:"+color+"22;color:"+color+";border:1px solid "+color+"44;flex-shrink:0;'>"+esc(post.language)+"</span>"
+    +"<div style='font-size:15px;font-weight:700;color:var(--text);flex:1;line-height:1.3;'>"+esc(post.title)+"</div>"
+    +(isOwner?"<button onclick='deleteForumPost(\""+esc(post.id)+"\")' style='background:none;border:1px solid rgba(248,113,113,.3);color:var(--red);padding:3px 9px;border-radius:6px;cursor:pointer;font-size:11px;font-family:var(--font);flex-shrink:0;'>Delete</button>":"")
+    +"</div>"
+    +"<div style='font-size:12px;color:var(--muted);'>by <strong style='color:"+getUsernameColor(post.username)+"'>"+esc(post.username)+"</strong> &middot; "+esc(time)+"</div>"
+    +(post.description?"<p style='font-size:13px;color:var(--muted);line-height:1.5;'>"+esc(post.description)+"</p>":"")
+    +"<div style='display:flex;gap:8px;flex-wrap:wrap;'>"
+    +"<button onclick='openRunnerWithCode(\""+esc(post.language)+"\",currentForumPost.code)' style='padding:7px 16px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:var(--green);border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);'>&#9654; Run</button>"
+    +(post.language==="html"?"<button onclick='openHtmlEditorWithCode(currentForumPost.code)' style='padding:7px 16px;background:rgba(79,142,255,.08);border:1px solid rgba(79,142,255,.2);color:var(--accent2);border-radius:7px;cursor:pointer;font-size:12px;font-family:var(--font);'>Preview</button>":"")
+    +"<button onclick='openAiSidebar(\"forum\")' style='padding:7px 16px;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);color:var(--purple);border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);'>AI</button>"
+    +"<button onclick='copyForumCode()' style='padding:7px 14px;background:none;border:1px solid var(--border);color:var(--muted);border-radius:7px;cursor:pointer;font-size:12px;font-family:var(--font);'>Copy</button>"
+    +"</div>"
+    +"<div style='background:#0d1117;border:1px solid var(--border);border-radius:10px;overflow:hidden;'>"
+    +"<div style='padding:6px 12px;background:var(--surface3);border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);font-family:var(--mono);display:flex;justify-content:space-between;'><span>"+esc(post.language)+"</span><span>"+lines+" lines</span></div>"
+    +"<pre style='margin:0;padding:14px;font-family:var(--mono);font-size:12px;color:#e6edf3;overflow:auto;max-height:420px;white-space:pre;line-height:1.6;'>"+esc(post.code||"")+"</pre>"
+    +"</div>";
+}
+
+function copyForumCode(){if(currentForumPost)navigator.clipboard.writeText(currentForumPost.code||"");}
+
+async function submitForumPost() {
+  var title=document.getElementById("forum-title-input").value.trim();
+  var lang=document.getElementById("forum-lang-input").value;
+  var desc=document.getElementById("forum-desc-input").value.trim();
+  var code=document.getElementById("forum-code-input").value.trim();
+  var err=document.getElementById("forum-post-error");
+  err.style.display="none";
+  if(!title){err.textContent="Title required.";err.style.display="block";return;}
+  if(!code){err.textContent="Code required.";err.style.display="block";return;}
+  try{
+    var res=await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"submitForumPost",clientSecret:CLIENT_SECRET,username:username,title:title,language:lang,description:desc,code:code})});
+    var data=await res.json();
+    if(data.ok){
+      document.getElementById("forum-title-input").value="";
+      document.getElementById("forum-desc-input").value="";
+      document.getElementById("forum-code-input").value="";
+      showForumView("list");loadForumPosts();
+    } else {err.textContent="Failed to post.";err.style.display="block";}
+  }catch(e){err.textContent="Network error.";err.style.display="block";}
+}
+
+async function deleteForumPost(postId) {
+  if(!confirm("Delete this post?"))return;
+  try{
+    var res=await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"deleteForumPost",clientSecret:CLIENT_SECRET,username:username,postId:postId})});
+    var data=await res.json();
+    if(data.ok){showForumView("list");loadForumPosts();}
+    else alert("Failed to delete.");
+  }catch(e){alert("Network error.");}
+}
+
+/* ── Script Executor ── */
+var executorDragging=false;
+function openRunner(){
+  document.getElementById("runner-panel").style.display="flex";
+  onRunnerLangChange();
+  initExecutorGutter();
+}
+function closeRunner(){document.getElementById("runner-panel").style.display="none";}
+function clearRunner(){
+  document.getElementById("runner-code").value="";
+  document.getElementById("runner-output").textContent="";
+  document.getElementById("runner-preview").srcdoc="";
+  document.getElementById("runner-log-entries").innerHTML="";
+  document.getElementById("runner-log-count").textContent="";
+}
+
+function initExecutorGutter(){
+  var gutter=document.getElementById("executor-gutter");
+  var left=document.getElementById("executor-left-pane");
+  var preview=document.getElementById("runner-preview");
+  if(gutter._init)return; gutter._init=true;
+  gutter.addEventListener("mousedown",function(){executorDragging=true;preview.style.pointerEvents="none";});
+  document.addEventListener("mousemove",function(e){if(!executorDragging)return;var p=(e.clientX/window.innerWidth)*100;if(p>10&&p<90)left.style.width=p+"%";});
+  document.addEventListener("mouseup",function(){executorDragging=false;preview.style.pointerEvents="auto";});
+}
+
+function openRunnerWithCode(lang,code){
+  var sel=document.getElementById("runner-lang");
+  var langMap={"gs":"javascript","css":"html","plaintext":"javascript"};
+  var mapped=langMap[lang]||lang||"javascript";
+  var valid=["javascript","python","html","java","cpp","go","rust"].indexOf(mapped)>-1;
+  sel.value=valid?mapped:"javascript";
+  document.getElementById("runner-code").value=code||"";
+  onRunnerLangChange();
+  if(mapped==="html")runCode();
+  document.getElementById("runner-panel").style.display="flex";
+  initExecutorGutter();
+}
+
+function onRunnerCodeInput(){
+  var lang=document.getElementById("runner-lang").value;
+  if(lang==="html")runCode();
+}
+
+function onRunnerLangChange(){
+  var lang=document.getElementById("runner-lang").value;
+  var isHtml=lang==="html";
+  document.getElementById("runner-output").style.display=isHtml?"none":"block";
+  document.getElementById("runner-preview").style.display=isHtml?"block":"none";
+  document.getElementById("runner-output-label").textContent=isHtml?"Preview":"Output";
+  document.getElementById("runner-run-btn").style.display=isHtml?"none":"flex";
+  document.getElementById("executor-code-label").textContent=isHtml?"HTML":"Code";
+}
+
+// openHtmlEditorWithCode now routes to executor
+function openHtmlEditorWithCode(code){openRunnerWithCode("html",code);}
+function openHtmlEditor(){openRunner();}
+function closeHtmlEditor(){closeRunner();}
+function htmlEditorUpdate(){runCode();}
+
+
+async function runCode(){
+  var lang=document.getElementById("runner-lang").value;
+  var code=document.getElementById("runner-code").value;
+  if(!code.trim())return;
+  var output=document.getElementById("runner-output");
+  var preview=document.getElementById("runner-preview");
+
+  if(lang==="html"){
+    var consolePatch2="<script>(function(){var _m=['log','warn','error','info'];_m.forEach(function(m){var o=console[m];console[m]=function(){var a=Array.prototype.slice.call(arguments).map(function(x){return typeof x==='object'?JSON.stringify(x):String(x);}).join(' ');window.parent.postMessage({type:'console',level:m,msg:a},'*');o.apply(console,arguments);};});window.addEventListener('error',function(e){window.parent.postMessage({type:'console',level:'error',msg:e.message+' (line '+e.lineno+')'}, '*');});})();<\/script>";
+    var css2="<style>html,body{margin:0;padding:10px;font-family:sans-serif;background:#fff;box-sizing:border-box;}*{box-sizing:border-box;}</style>";
+    preview.srcdoc=consolePatch2+css2+code; return;
+  }
+
+  if(lang==="javascript"){
+    output.textContent="Running...";
+    document.getElementById("runner-log-entries").innerHTML="";
+    document.getElementById("runner-log-count").textContent="";
+    var iframe=document.createElement("iframe");
+    iframe.style.display="none"; iframe.setAttribute("sandbox","allow-scripts");
+    document.body.appendChild(iframe);
+    var blobCode="var _l=[];['log','warn','error'].forEach(function(m){var o=console[m];console[m]=function(){var a=Array.prototype.slice.call(arguments).map(function(x){return typeof x==='object'?JSON.stringify(x,null,2):String(x);}).join(' ');window.parent.postMessage({type:'console',level:m,msg:a},'*');_l.push('['+m+'] '+a);};});window.addEventListener('error',function(e){window.parent.postMessage({type:'console',level:'error',msg:e.message+' (line '+e.lineno+')'},'*');});var _e=null;try{"+code+"}catch(e){_e=e.toString();window.parent.postMessage({type:'console',level:'error',msg:_e},'*');}window.parent.postMessage({logs:_l,err:_e},'*');";
+    iframe.srcdoc="<script>"+blobCode+"<\/script>";
+    var result=await new Promise(function(resolve){
+      var msgs=[];
+      var handler=function(e){
+        if(e.data&&e.data.type==="console")return; // handled by global listener
+        if(e.data&&e.data.logs!==undefined){window.removeEventListener("message",handler);resolve(e.data);}
+      };
+      window.addEventListener("message",handler);
+      setTimeout(function(){window.removeEventListener("message",handler);resolve({logs:[],err:"Timeout (5s)"});},5000);
+    });
+    if(iframe.parentNode)document.body.removeChild(iframe);
+    output.textContent=result.logs.length?result.logs.join("\n"):"(no output)";
+    if(result.err&&result.logs.length===0)output.textContent=result.err;
+    return;
+  }
+
+  // Other languages via Piston API
+  var pistonMap={python:{language:"python",version:"3.10.0"},java:{language:"java",version:"15.0.2"},cpp:{language:"c++",version:"10.2.0"},go:{language:"go",version:"1.16.2"},rust:{language:"rust",version:"1.50.0"}};
+  var pl=pistonMap[lang];
+  if(!pl){output.textContent="Language not supported for running.";return;}
+  output.textContent="Running via Piston API...";
+  try{
+    var res=await fetch("https://emkc.org/api/v2/piston/execute",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({language:pl.language,version:pl.version,files:[{content:code}]})});
+    var data=await res.json();
+    var out2="";
+    if(data.compile&&data.compile.stderr)out2+="Compile error:\n"+data.compile.stderr+"\n";
+    if(data.run){if(data.run.stdout)out2+=data.run.stdout;if(data.run.stderr)out2+="\nStderr:\n"+data.run.stderr;}
+    output.textContent=out2||"(no output)";
+  }catch(e){output.textContent="Could not reach Piston API. Check connection.";}
+}
+
+
+/* ── AI Sidebar ── */
+var aiSidebarHistory=[], aiSidebarStreaming=false, aiSidebarSource="";
+
+function openAiSidebar(source) {
+  aiSidebarSource=source;
+  var code="", label="";
+  if(source==="runner"){code=document.getElementById("runner-code").value;label="Script Executor";}
+  else if(source==="forum"&&currentForumPost){code=currentForumPost.code||"";label=currentForumPost.title||"Forum Post";}
+  document.getElementById("ai-sb-context-label").textContent=label+" - "+((code||"").split("\n").length)+" lines";
+  document.getElementById("ai-sidebar").dataset.code=code;
+  document.getElementById("ai-sidebar").style.display="flex";
+  var inp=document.getElementById("ai-sb-input");
+  inp.addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendAiSidebarMsg();}});
+  inp.addEventListener("input",function(){inp.style.height="auto";inp.style.height=Math.min(inp.scrollHeight,80)+"px";});
+  inp.focus();
+}
+
+function closeAiSidebar(){document.getElementById("ai-sidebar").style.display="none";}
+
+function clearAiSidebar(){
+  aiSidebarHistory=[];
+  var msgs=document.getElementById("ai-sb-msgs");
+  msgs.innerHTML="<div style='text-align:center;padding:24px 12px;color:var(--muted2);font-size:12px;line-height:1.7;'>Ask me anything about the code.<br>I can fix bugs, explain logic,<br>or suggest improvements.</div>";
+}
+
+function addSidebarBubble(role,text){
+  var msgs=document.getElementById("ai-sb-msgs");
+  var d=document.createElement("div");d.className="ai-sb-msg "+role;
+  var b=document.createElement("div");b.className="ai-sb-bubble";
+  if(role==="assistant"){b.innerHTML=renderMd(text);}else{b.textContent=text;}
+  d.appendChild(b);msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return b;
+}
+
+async function sendAiSidebarMsg(){
+  if(aiSidebarStreaming)return;
+  var inp=document.getElementById("ai-sb-input");
+  var text=inp.value.trim();if(!text)return;
+  inp.value="";inp.style.height="auto";
+  var code=document.getElementById("ai-sidebar").dataset.code||"";
+  var userContent=text;
+  if(aiSidebarHistory.length===0&&code){
+    userContent="Here is the code I am working with:\n\n```\n"+code.substring(0,8000)+"\n```\n\n"+text;
+  }
+  addSidebarBubble("user",text);
+  aiSidebarHistory.push({role:"user",content:userContent});
+  aiSidebarStreaming=true;
+  document.getElementById("ai-sb-send").disabled=true;
+  var sel=document.getElementById("model-select");
+  var model=sel?sel.value:"claude-sonnet-4-6";
+  var sysPrompt="You are an expert code reviewer and debugger embedded in a code editor. The user is showing you their code. Help fix bugs, explain logic, suggest improvements, and answer questions concisely. When providing code fixes, wrap them in fenced code blocks.";
+  try{
+    var res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:model,max_tokens:2048,stream:true,system:sysPrompt,messages:aiSidebarHistory})});
+    if(!res.ok)throw new Error("API error "+res.status);
+    var bubble=addSidebarBubble("assistant","");
+    var reader=res.body.getReader(),decoder=new TextDecoder();
+    var fullText="",buffer="";
+    while(true){
+      var chunk=await reader.read();if(chunk.done)break;
+      buffer+=decoder.decode(chunk.value,{stream:true});
+      var lines=buffer.split("\n");buffer=lines.pop();
+      for(var i=0;i<lines.length;i++){
+        var line=lines[i];if(!line.startsWith("data: "))continue;
+        var ds=line.slice(6).trim();if(ds==="[DONE]")continue;
+        try{var p=JSON.parse(ds);if(p.type==="content_block_delta"&&p.delta&&p.delta.type==="text_delta"){fullText+=p.delta.text;bubble.innerHTML=renderMd(fullText);var msgs=document.getElementById("ai-sb-msgs");msgs.scrollTop=msgs.scrollHeight;}}catch(pe){}
+      }
+    }
+    aiSidebarHistory.push({role:"assistant",content:fullText});
+  }catch(e){addSidebarBubble("assistant","Error: "+esc(e.message));}
+  finally{aiSidebarStreaming=false;document.getElementById("ai-sb-send").disabled=false;}
+}
+
+/* ── Logs ── */
+var htmlLogsOpen=false, runnerLogsOpen=false;
+
+function toggleHtmlLogs(){
+  htmlLogsOpen=!htmlLogsOpen;
+  document.getElementById("html-log-entries").style.display=htmlLogsOpen?"block":"none";
+  document.getElementById("html-log-toggle").textContent=htmlLogsOpen?"&#9660;":"&#9650;";
+}
+function toggleRunnerLogs(){
+  runnerLogsOpen=!runnerLogsOpen;
+  document.getElementById("runner-log-entries").style.display=runnerLogsOpen?"block":"none";
+  document.getElementById("runner-log-toggle").textContent=runnerLogsOpen?"&#9660;":"&#9650;";
+}
+function clearHtmlLogs(){
+  document.getElementById("html-log-entries").innerHTML="";
+  document.getElementById("html-log-count").textContent="";
+}
+function addLogEntry(containerId,countId,level,text){
+  var container=document.getElementById(containerId);
+  var entry=document.createElement("div");
+  entry.className="log-entry "+level;
+  var prefix=level==="error"?"[ERR]":level==="warn"?"[WRN]":"[LOG]";
+  entry.innerHTML="<span class='log-prefix'>"+prefix+"</span>"+esc(text);
+  container.appendChild(entry);
+  var count=document.getElementById(countId);
+  var n=container.children.length;
+  count.textContent=n>0?"("+n+")":"";
+}
+
+// Listen for console messages from iframes
+window.addEventListener("message",function(e){
+  if(e.data&&e.data.type==="console"){
+    var runnerActive=document.getElementById("runner-panel").style.display==="flex";
+    if(runnerActive){
+      addLogEntry("runner-log-entries","runner-log-count",e.data.level,e.data.msg);
+      if(!runnerLogsOpen)toggleRunnerLogs();
+    }
+  }
+});
+
+/* ── Utils ── */
+function esc(s){return(s||"").toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function scrollMsgs(){var m=document.getElementById("messages");m.scrollTop=m.scrollHeight;}
+function renderMd(text){
+  text=text.replace(/```(\w*)\n?([\s\S]*?)```/g,function(_,lang,code){return "<pre><div class=\"code-header\"><span>"+esc(lang||"code")+"</span><button class=\"copy-btn\" onclick=\"copyCode(this)\">Copy</button></div><code class=\"language-"+(lang||"plaintext")+"\">"+esc(code.trimEnd())+"</code></pre>";});
+  text=text.replace(/`([^`]+)`/g,function(_,c){return "<code>"+esc(c)+"</code>";});
+  text=text.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\*(.*?)\*/g,"<em>$1</em>");
+  text=text.replace(/^### (.+)$/gm,"<strong style='font-size:13.5px;display:block;margin:11px 0 3px'>$1</strong>");
+  text=text.replace(/^## (.+)$/gm,"<strong style='font-size:14.5px;display:block;margin:13px 0 4px'>$1</strong>");
+  text=text.replace(/^# (.+)$/gm,"<strong style='font-size:15px;display:block;margin:14px 0 5px'>$1</strong>");
+  text=text.replace(/^\s*[-*] (.+)$/gm,"<li>$1</li>").replace(/(<li>[\s\S]*?<\/li>)/g,"<ul>$1</ul>");
+  text=text.replace(/\n\n/g,"</p><p>").replace(/\n/g,"<br>");
+  return "<p>"+text+"</p>";
+}
+function copyCode(btn){navigator.clipboard.writeText(btn.closest("pre").querySelector("code").textContent).then(function(){btn.textContent="Copied!";btn.classList.add("copied");setTimeout(function(){btn.textContent="Copy";btn.classList.remove("copied");},2000);});}
+document.addEventListener("DOMContentLoaded",function(){
+  ["username-input","passkey-input","apikey-input"].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener("keydown",function(e){if(e.key==="Enter")doAuth();});});
+  var oi=document.getElementById("opus-passkey-input");if(oi)oi.addEventListener("keydown",function(e){if(e.key==="Enter")verifyOpusPasskey();});
+  var pi=document.getElementById("personal-key-input");if(pi)pi.addEventListener("keydown",function(e){if(e.key==="Enter")verifyPersonalKey();});
+});
+</script>
+</body>
+</html>
